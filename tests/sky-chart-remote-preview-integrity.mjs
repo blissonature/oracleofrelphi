@@ -347,7 +347,7 @@ try{
    console.log('CORE MODE VISIBILITY PASS',viewport.width,JSON.stringify(immediate));
 
    // Start directly in Explore with an established sky and exercise both navigation directions.
-   await page.evaluate(a=>{localStorage.setItem('relphiSkyChartA',JSON.stringify(a));localStorage.setItem('relphiSkyChartLastModeV1','single')},a);
+   await page.evaluate(a=>{window.RelphiSkyWorkingStorage.setItem('relphiSkyChartA',JSON.stringify(a));window.RelphiSkyStartupMode.writeMode('single')},a);
    await page.reload({waitUntil:'domcontentloaded'});
    await focus.locator('[data-sky-experience="learn"]').waitFor({state:'visible',timeout:20000});
    await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-single-sky]',{timeout:20000});
