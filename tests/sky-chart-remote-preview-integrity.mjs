@@ -120,7 +120,7 @@ try{
    const houseRows=core.locator('.sky-core-house-tile');
    assert.equal(await houseRows.count(),12);
    await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationLearnCore .sky-core-house-tile [data-relphi-house-glyph]')].length===12&&[...document.querySelectorAll('#skyFoundationLearnCore .sky-core-house-tile [data-relphi-house-glyph]')].every(el=>el.dataset.relphiHouseGlyphHydrated==='true'&&el.querySelector('svg .relphi-canonical-glyph')));
-   const layout=await houseRows.evaluateAll(rows=>{
+   const houseLayout=await houseRows.evaluateAll(rows=>{
      const box=el=>el.getBoundingClientRect();
      const center=r=>({x:r.x+r.width/2,y:r.y+r.height/2});
      return rows.map(row=>{
@@ -128,8 +128,8 @@ try{
        return {houseLeft:house.right<=name.left,glyphRight:g.left>=name.right,centered:[house,g,svg].every(b=>Math.abs(center(b).y-center(r).y)<1),svgCentered:Math.abs(center(g).x-center(svg).x)<1,width:g.width,svgWidth:svg.width,house:row.dataset.house};
      });
    });
-   console.log('CORE HOUSE GLYPH LAYOUT',viewport.width,JSON.stringify(layout));
-   assert.ok(layout.every((r,i)=>r.houseLeft&&r.glyphRight&&r.centered&&r.svgCentered&&r.house===String(i+1)&&Math.abs(r.width-(viewport.width<=520?20:21))<1&&Math.abs(r.width-r.svgWidth)<1),'House medallion left and shared full-card glyph right, centered in every row');
+   console.log('CORE HOUSE GLYPH LAYOUT',viewport.width,JSON.stringify(houseLayout));
+   assert.ok(houseLayout.every((r,i)=>r.houseLeft&&r.glyphRight&&r.centered&&r.svgCentered&&r.house===String(i+1)&&Math.abs(r.width-(viewport.width<=520?20:21))<1&&Math.abs(r.width-r.svgWidth)<1),'House medallion left and shared full-card glyph right, centered in every row');
    await houseRows.first().click();
    await core.locator('[data-core-content]:not([hidden]) [data-core-title] [data-relphi-house-glyph] svg').waitFor({state:'visible'});
    const titleGlyph=await core.locator('[data-core-title] .sky-card-house-detail-glyph').evaluate(el=>({width:el.getBoundingClientRect().width,svg:el.querySelector('svg').getBoundingClientRect().width}));
