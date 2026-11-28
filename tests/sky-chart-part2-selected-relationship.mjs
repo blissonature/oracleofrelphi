@@ -66,7 +66,7 @@ await page.waitForSelector('#skyFoundationFocus > .sky-foundation-focus-heading 
 await page.waitForSelector('#skyFoundationFocus > .sky-foundation-focus-heading [data-relationship-display-control]', {timeout:10000});
 await page.waitForSelector('#skyFoundationRelationships > .sky-foundation-relationships-heading [data-relationship-sort]', {timeout:10000});
 assert.equal((await page.locator('#skyFoundationComparison > .sky-foundation-heading').textContent()).trim(), 'Zodiac Wheel');
-assert.equal((await page.locator('#skyFoundationFocus > .sky-foundation-focus-heading h2').textContent()).trim(), 'Focus');
+assert.equal(await page.locator('#skyFoundationFocus > .sky-foundation-focus-heading h2').count(),0,'No redundant visible Focus label.');
 assert.equal(await page.locator('#skyFoundationRelationships .sky-chart-filter-bar').count(),0,'Shared Focus filters must not remain inside Relationships.');
 assert.equal(await page.locator('#skyFoundationFocus > .sky-chart-filter-bar').count(),1,'Focus must own the shared filter bar.');
 assert.equal(await page.locator('#skyFoundationFocus > .sky-foundation-focus-heading [data-harmonic-window-input]').count(),1,'Harmonic Window must share the Focus heading line.');

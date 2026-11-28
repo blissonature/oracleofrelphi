@@ -29,13 +29,13 @@
       }
       #skyFoundationA>.sky-foundation-heading>.sky-card-title-stable>.sky-saved-name-trigger,
       #skyFoundationB>.sky-foundation-heading>.sky-card-title-stable>.sky-saved-name-trigger{
-        width:100%!important;min-width:0!important
+        display:block;width:100%;min-width:0;pointer-events:none;cursor:default
       }
     `;
     document.head.appendChild(style);
   }
 
-  function read(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
+  function read(slot){try{return JSON.parse(window.RelphiSkyWorkingStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
   function normalize(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ')}
   function metadata(value){return value?.metadata&&typeof value.metadata==='object'?value.metadata:{}}
   function profile(value){return value?.calcProfile&&typeof value.calcProfile==='object'?value.calcProfile:{}}
@@ -131,10 +131,10 @@
     let button=host.querySelector(':scope > [data-saved-sky-trigger]');
     if(!button){
       host.replaceChildren();button=document.createElement('button');button.type='button';button.className='sky-saved-name-trigger';button.dataset.savedSkyTrigger=slot;
+      button.addEventListener('click',()=>window.RelphiSkyCardShell?.openDrawer?.(slot,'where'));
       button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-expanded','false');
       const label=document.createElement('span');label.className='sky-saved-name-label';
-      const chevron=document.createElement('span');chevron.className='sky-saved-name-chevron';chevron.setAttribute('aria-hidden','true');
-      button.append(label,chevron);host.appendChild(button);
+      button.append(label);host.appendChild(button);
     }
     return button;
   }
@@ -145,8 +145,7 @@
     if(label&&label.textContent!==name)label.textContent=name;
     button.classList.toggle('is-saved',isSaved);
     button.classList.toggle('is-dirty',!!matched?.dirty);
-    button.title=`${name} · open Sky menu`;
-    button.setAttribute('aria-label',`${name}. Open Sky menu for Sky ${slot}.`);
+    button.title=name;
   }
   function nextLiveDelay(){
     const now=Date.now();let soon=Infinity;

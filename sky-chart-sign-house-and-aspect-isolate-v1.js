@@ -9,7 +9,7 @@
   const norm = value => ((Number(value) % 360) + 360) % 360;
 
   function read(key) {
-    try { return JSON.parse(localStorage.getItem(key) || 'null'); }
+    try { return JSON.parse(window.RelphiSkyWorkingStorage.getItem(key) || 'null'); }
     catch (_) { return null; }
   }
 
@@ -71,6 +71,7 @@
   }
 
   function applySignHouseCorrection(event) {
+    if(window.RelphiSkyStartupMode?.readMode?.()==='learn')return;
     const state = event.detail?.state;
     // The fast hover path already computes sign-to-house overlap from cached cusps.
     // Re-reading both saved skies and recomputing cusps here would duplicate that work.

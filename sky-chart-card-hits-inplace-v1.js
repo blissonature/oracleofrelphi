@@ -8,8 +8,6 @@ window.__relphiSkyCardHitsInplaceV2=true;
 window.__relphiSkyCardHitsInplaceV1=true;
 
 const NS='http://www.w3.org/2000/svg';
-const RELATIONSHIP_GLYPH_DISPLAY_SIZE=38;
-const RELATIONSHIP_GLYPH_RADIUS=19;
 const SIGN_RULERS={aries:'Mars',taurus:'Venus',gemini:'Mercury',cancer:'Moon',leo:'Sun',virgo:'Mercury',libra:'Venus',scorpio:'Mars',sagittarius:'Jupiter',capricorn:'Saturn',aquarius:'Saturn',pisces:'Jupiter'};
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
@@ -158,29 +156,7 @@ function houseLegs(cusps,house){
 function ordinalHouse(house){const n=Number(house),mod100=n%100,suffix=(mod100>=11&&mod100<=13)?'th':n%10===1?'st':n%10===2?'nd':n%10===3?'rd':'th';return `${n}${suffix} House`}
 function faceLord(sign,decan){const si=SIGNS.findIndex(s=>s.toLowerCase()===String(sign||'').toLowerCase()),d=Number(decan);if(si<0||!Number.isFinite(d))return'';return FACE_SEQUENCE[(si*3+Math.max(0,Math.min(2,Math.trunc(d))))%FACE_SEQUENCE.length]}
 
-function glyphHost(id,className='sky-card-house-detail-glyph'){
-  const host=document.createElement('span');host.className=className;host.dataset.relphiHouseGlyph=String(id||'').toLowerCase();host.setAttribute('aria-hidden','true');return host;
-}
-function relationshipMatchedRadius(host){
-  const rectWidth=host?.getBoundingClientRect?.().width||0;
-  const cssWidth=parseFloat(getComputedStyle(host).width)||0;
-  const displaySize=rectWidth||cssWidth||RELATIONSHIP_GLYPH_DISPLAY_SIZE;
-  return RELATIONSHIP_GLYPH_RADIUS*(RELATIONSHIP_GLYPH_DISPLAY_SIZE/displaySize);
-}
-function hydrateHouseGlyphs(scope){
-  const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;if(!registry||!component?.createBubble||!scope?.querySelectorAll)return;
-  scope.querySelectorAll('[data-relphi-house-glyph]').forEach(host=>{
-    if(host.dataset.relphiHouseGlyphHydrated==='true')return;
-    const id=host.dataset.relphiHouseGlyph,entry=registry.get?.(id)||registry.resolve?.(id);if(!entry)return;
-    host.dataset.relphiHouseGlyphHydrated='true';host.replaceChildren();
-    const svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','-32 -32 64 64');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');host.appendChild(svg);
-    try{
-      const bubble=component.createBubble(svg,entry.id,{radius:relationshipMatchedRadius(host),padding:1,color:'#111111',fill:'#ffffff'});
-      if(bubble.circle){bubble.circle.style.opacity='0';bubble.circle.setAttribute('aria-hidden','true')}
-      Promise.resolve(bubble.ready).catch(error=>{host.dataset.relphiHouseGlyphHydrated='error';console.error('[Sky Chart] Canonical House Card Hits glyph failed',entry.id,error)});
-    }catch(error){host.dataset.relphiHouseGlyphHydrated='error';console.error('[Sky Chart] Canonical House Card Hits glyph failed',entry.id,error)}
-  });
-}
+const {glyphHost,hydrateHouseGlyphs}=window.RelphiSkyCardHitsStructure;
 
 function ensureStyles(){
   if(document.getElementById('skyCardHitsInplaceV4Styles'))return;
@@ -196,9 +172,7 @@ function ensureStyles(){
 .sky-card-house-toggle:hover,.sky-card-house-toggle:focus-visible{background:#f8f4ee;outline:none}
 .sky-card-house-toggle[aria-expanded="true"]{border-bottom:1px solid rgba(31,27,24,.09)}
 .sky-card-house-toggle-range{display:flex;align-items:center;gap:.24rem;min-width:0;overflow:visible;color:#5f5750;font:780 .57rem/1.15 system-ui,sans-serif;white-space:nowrap}
-.sky-card-house-toggle-range-text{white-space:nowrap}.sky-card-house-toggle-arrow{opacity:.62;margin:0 .02rem}.sky-card-house-toggle-glyph{display:inline-block;flex:0 0 30px;width:30px;height:30px}
-.sky-card-house-toggle-glyph svg,.sky-card-house-detail-glyph svg{display:block;width:100%;height:100%;overflow:visible}
-.sky-card-house-detail-glyph{display:inline-block;flex:0 0 32px;width:32px;height:32px}
+.sky-card-house-toggle-range-text{white-space:nowrap}.sky-card-house-toggle-arrow{opacity:.62;margin:0 .02rem}
 .sky-card-house-hit-count{display:grid;place-items:center;min-width:25px;height:25px;padding:0 5px;border-radius:999px;background:var(--accent);color:#fff;font:900 .65rem/1 system-ui,sans-serif;box-shadow:0 1px 3px rgba(31,27,24,.14)}
 .sky-card-house-hit-count.is-zero{background:#ebe6df;color:#8b8178;box-shadow:none}
 .sky-card-house-detail{display:grid;gap:.72rem;min-width:0;padding:.68rem .65rem .75rem;background:#fffdfa}
@@ -209,7 +183,7 @@ function ensureStyles(){
 .sky-card-house-span-heading{min-width:0;color:#554d46;font:850 .57rem/1.28 system-ui,sans-serif}
 .sky-card-house-span-major-art,.sky-card-house-detail-row .sky-card-house-decan-art{display:grid!important;place-items:center!important;border:0!important;outline:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;clip-path:none!important;mask:none!important;-webkit-mask:none!important;overflow:visible!important}
 .sky-card-house-span-major-art>.sky-card-house-art-native,.sky-card-house-detail-row .sky-card-house-decan-art>.sky-card-house-art-native{border:0!important;outline:0!important;border-radius:0!important;box-shadow:none!important;clip-path:none!important;mask:none!important;-webkit-mask:none!important;overflow:visible!important}
-@media(max-width:520px){.sky-card-house-toggle{gap:.38rem;padding:.5rem .55rem}.sky-card-house-toggle-range{gap:.18rem;font-size:.54rem}.sky-card-house-toggle-glyph{flex-basis:29px;width:29px;height:29px}.sky-card-house-detail-glyph{flex-basis:31px;width:31px;height:31px}}
+@media(max-width:520px){.sky-card-house-toggle{gap:.38rem;padding:.5rem .55rem}.sky-card-house-toggle-range{gap:.18rem;font-size:.54rem}}
 `;
   document.head.appendChild(style);
 }

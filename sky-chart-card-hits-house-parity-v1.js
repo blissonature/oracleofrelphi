@@ -56,18 +56,12 @@ function installStyles(){
     }
     .sky-card-house-toggle-range-text{white-space:nowrap!important}
     .sky-card-house-toggle-arrow{margin:0 .02rem!important;opacity:.56!important}
-    .sky-card-house-toggle-glyph{
-      display:inline-block!important;flex:0 0 21px!important;width:21px!important;height:21px!important;
-      margin:0!important;vertical-align:middle!important
-    }
-    .sky-card-house-toggle-glyph svg{display:block!important;width:100%!important;height:100%!important;overflow:visible!important}
     .sky-card-house-hit-count{align-self:center!important;margin:0!important}
     .sky-card-house-detail{border-radius:0!important}
     @media(max-width:520px){
       .sky-card-house-toggle{grid-template-columns:19px minmax(0,1fr) 48px!important;gap:6px!important;min-height:32px!important;padding:4px 9px!important}
       .sky-card-house-toggle>.relphi-house-medallion{flex-basis:17px!important;width:17px!important;height:17px!important;min-width:17px!important;min-height:17px!important}
       .sky-card-house-toggle-range{font-size:.65rem!important;gap:.1rem!important}
-      .sky-card-house-toggle-glyph{flex-basis:20px!important;width:20px!important;height:20px!important}
       .sky-card-house-hit-count{transform:scale(.92);transform-origin:right center}
     }
   `;

@@ -4,7 +4,7 @@
   if(!/(^|\/)sky-chart\.html$/.test(location.pathname))return;
   if(document.querySelector('script[data-card-hits-inplace-loader]'))return;
   const script=document.createElement('script');
-  script.src='sky-chart-card-hits-inplace-v1.js?v=12';
+  script.src='sky-chart-card-hits-inplace-v1.js?v=14-shared-glyph-size';
   script.async=false;
   script.dataset.cardHitsInplaceLoader='true';
   document.head.appendChild(script);

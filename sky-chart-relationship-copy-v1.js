@@ -35,7 +35,7 @@
   // legacy rows still retain house medallions or stale house numbers.
   function includeExportHouse(slot){
     if(slot!=='A'&&slot!=='B')return false;
-    let sky=null;try{sky=JSON.parse(localStorage.getItem('relphiSkyChart'+slot)||'null')}catch(_){}
+    let sky=null;try{sky=JSON.parse(window.RelphiSkyWorkingStorage.getItem('relphiSkyChart'+slot)||'null')}catch(_){}
     if(!sky)return false;
     const p=sky.calcProfile||{};
     return p.timeUnknown!==true&&sky.timeUnknown!==true&&String(p.houseSystem||sky.houseSystem||'').toLowerCase()!=='none';
@@ -109,7 +109,7 @@
     );
     const stored=small?.dataset?.relationshipCoordinate?.trim();
     if(stored)return stored;
-    const match=String(small?.textContent||'').match(/\d{1,2}°\d{2}′/);
+    const match=String(small?.textContent||'').match(/\d{1,2}°\d{2}′(?:\d{2}″)?/);
     return match?.[0]||'';
   }
 
@@ -171,10 +171,12 @@
     return `${heading}\n\n${sections.join('\n\n')}`;
   }
 
-  async function writeClipboard(text){
+  async function writeClipboard(text,canWrite=()=>true){
+    if(!canWrite())return false;
     try{
       if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);return true}
     }catch(_){}
+    if(!canWrite())return false;
     const textarea=document.createElement('textarea');
     textarea.value=text;
     textarea.setAttribute('readonly','');
@@ -201,7 +203,8 @@
     longPress=null;
   }
   async function commitLongPress(state,event){
-    if(!state||state.copied||!state.row.isConnected)return false;
+    if(!state||state.copied||!state.row.isConnected||longPress!==state||document.hidden||!document.hasFocus())return false;
+    if(state.copyPromise)return state.copyPromise;
     const text=serializeRow(state.row);
     if(!text)return false;
     suppressClickUntil=Date.now()+900;
@@ -210,16 +213,20 @@
       event.preventDefault();
       event.stopPropagation();
     }
-    const copied=await writeClipboard(text);
-    if(!copied)return false;
-    state.copied=true;
-    state.row.dataset.relationshipLongPressCopied='true';
-    window.setTimeout(()=>{if(state.row.isConnected)delete state.row.dataset.relationshipLongPressCopied},900);
-    try{window.getSelection?.()?.removeAllRanges()}catch(_){}
-    return true;
+    state.copyPromise=(async()=>{
+      const copied=await writeClipboard(text,()=>longPress===state&&state.row.isConnected&&!document.hidden&&document.hasFocus());
+      if(!copied)return false;
+      state.copied=true;
+      state.row.dataset.relationshipLongPressCopied='true';
+      window.setTimeout(()=>{if(state.row.isConnected)delete state.row.dataset.relationshipLongPressCopied},900);
+      try{window.getSelection?.()?.removeAllRanges()}catch(_){}
+      return true;
+    })();
+    return state.copyPromise;
   }
   function beginLongPress(event){
     if(event.button!==0&&!['touch','pen'].includes(event.pointerType))return;
+    if(document.hidden||!document.hasFocus())return;
     const row=relationshipRow(event.target);
     if(!row||row.hidden||row.getAttribute('aria-hidden')==='true'||getComputedStyle(row).display==='none')return;
     clearLongPress();
@@ -238,6 +245,7 @@
   }
   function moveLongPress(event){
     if(!longPress||event.pointerId!==longPress.pointerId||longPress.copied)return;
+    if(event.pointerType==='mouse'&&!(event.buttons&1)){clearLongPress();return}
     const dx=(Number(event.clientX)||0)-longPress.x,dy=(Number(event.clientY)||0)-longPress.y;
     if(Math.hypot(dx,dy)>LONG_PRESS_MOVE_PX)clearLongPress();
   }
@@ -247,7 +255,7 @@
     window.clearTimeout(state.timer);
     if(!state.copied&&event.timeStamp-state.startedAt>=LONG_PRESS_MS)await commitLongPress(state,event);
     const copied=state.copied;
-    longPress=null;
+    if(longPress===state)longPress=null;
     if(copied){
       event.preventDefault();
       event.stopPropagation();
@@ -275,6 +283,13 @@
       return;
     }
     clearLongPress();
+  },{capture:true});
+  // A screen-capture overlay or another application may take the pointer without
+  // delivering pointerup. Never let the abandoned gesture write to the clipboard.
+  window.addEventListener('blur',clearLongPress);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearLongPress()});
+  document.addEventListener('pointerout',event=>{
+    if(longPress?.pointerId===event.pointerId&&event.relatedTarget===null)clearLongPress();
   },{capture:true});
   document.addEventListener('click',suppressLongPressClick,{capture:true});
   document.addEventListener('contextmenu',event=>{

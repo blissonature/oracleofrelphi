@@ -98,6 +98,14 @@ try{
  await main.mouse.move(15,15);
  await main.waitForTimeout(100);
  assert.equal((await flash(main)).lines.length,0,'Pointer exit must extinguish temporary light');
+ // A later authoritative empty focus must not resurrect a prior hover.
+ await main.evaluate(()=>window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:null}})));
+ assert.equal((await flash(main)).lines.length,0,'Empty focus must clear the flashlight');
+ await main.mouse.move(a.x,a.y);
+ await main.waitForTimeout(100);
+ await main.mouse.move(15,15);
+ await main.waitForTimeout(100);
+ assert.equal((await flash(main)).lines.length,0,'Repeated hover exit must clear the flashlight');
 
  await main.mouse.click(a.x,a.y);
  await main.mouse.move(15,15);

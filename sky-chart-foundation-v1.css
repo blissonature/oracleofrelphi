@@ -1,4 +1,13 @@
 /* Part 1: stable three-panel Sky Chart foundation. */
+/* The Focus panel owns the page identity and navigation. */
+body.sky-chart-page .tarot-app-shell{max-width:min(1600px,calc(100vw - 32px));margin:0 auto 2rem}
+body.sky-chart-page #chartPanel{margin:0;padding:.45rem}
+body.sky-chart-page .sky-chart-page-brand{display:flex;align-items:flex-start;gap:8px;min-width:0;color:#211d19;text-align:left}
+.sky-chart-page-brand h1{font:800 1.15rem/1.1 system-ui,sans-serif;margin:0}
+.sky-chart-page-brand .red{color:var(--relphi-red)}
+.sky-chart-page-brand p{font:600 .76rem/1.2 system-ui,sans-serif;margin:0}
+@media(max-width:620px){body.sky-chart-page .tarot-app-shell{max-width:calc(100vw - 16px);margin-top:0}body.sky-chart-page #chartPanel{padding:.2rem}}
+
 body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot) {
   display:none !important;
 }
@@ -9,7 +18,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
   --sky-silver-glow:drop-shadow(0 0 2px rgba(255,255,255,.98)) drop-shadow(0 1px 2.2px rgba(80,88,98,.42));
   display:grid;
   grid-template-columns:minmax(220px,270px) minmax(520px,1fr) minmax(220px,270px);
-  grid-template-areas:"a comparison b";
+  grid-template-areas:"focus focus focus" "a comparison b";
   align-items:start;
   gap:14px;
   width:100%;
@@ -26,6 +35,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
   box-shadow:0 6px 20px rgba(40,30,20,.06);
 }
 
+#skyFoundationFocus { grid-area:focus; }
 #skyFoundationA { grid-area:a; border-top:4px solid var(--sky-a); }
 #skyFoundationComparison { grid-area:comparison; }
 #skyFoundationB { grid-area:b; border-top:4px solid var(--sky-b); }
@@ -170,7 +180,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 @media(max-width:900px) {
   #skyFoundationRoot {
     grid-template-columns:1fr 1fr;
-    grid-template-areas:"a b" "comparison comparison";
+    grid-template-areas:"focus focus" "a b" "comparison comparison";
   }
   #skyFoundationWheelMount { min-height:360px; }
 }
@@ -178,7 +188,7 @@ body.sky-chart-page.sky-foundation-active #chartPanel > :not(#skyFoundationRoot)
 @media(max-width:620px) {
   #skyFoundationRoot {
     grid-template-columns:1fr;
-    grid-template-areas:"a" "b" "comparison";
+    grid-template-areas:"focus" "a" "b" "comparison";
   }
   #skyFoundationWheelMount { min-height:300px; padding:4px; }
   #skyFoundationWheelMount .sky-foundation-aspect {

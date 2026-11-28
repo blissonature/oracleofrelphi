@@ -42,6 +42,26 @@ try{
    await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true});
    if(kind==='preview'&&(!state.wheelCount||state.mountVisible==='hidden'||state.rootBusy!=='false'||errors.length)){failed=true;console.error('FAILED: hosted exact-revision preview did not display a ready wheel');}
    if(kind==='preview'&&!failed){
+     // Clipboard handoff: a pending long-press must not replace an external capture.
+     await ctx.grantPermissions(['clipboard-read','clipboard-write']);
+     const row=page.locator('#skyFoundationRelationshipList .sky-foundation-relationship-row:visible').first();
+     await row.waitFor({state:'visible'});
+     for(const handoff of ['blur','pointerout']){
+       await page.evaluate(()=>navigator.clipboard.writeText('external capture sentinel'));
+       await row.evaluate((el,kind)=>{
+         el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:7,pointerType:'mouse',button:0,buttons:1,clientX:5,clientY:5}));
+         if(kind==='blur')window.dispatchEvent(new Event('blur'));
+         else el.dispatchEvent(new PointerEvent('pointerout',{bubbles:true,pointerId:7,pointerType:'mouse',relatedTarget:null}));
+       },handoff);
+       await page.waitForTimeout(550);
+       const value=await page.evaluate(()=>navigator.clipboard.readText());
+       assert.equal(value,'external capture sentinel',handoff+' must cancel pending automatic clipboard write');
+     }
+     await row.evaluate(el=>el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:7,pointerType:'mouse',button:0,buttons:1,clientX:5,clientY:5})));
+     await page.waitForTimeout(550);
+     assert.notEqual(await page.evaluate(()=>navigator.clipboard.readText()),'external capture sentinel','Intentional long press must still copy');
+     await row.evaluate(el=>el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:7,pointerType:'mouse',button:0,buttons:0})));
+     console.log('CLIPBOARD HANDOFF PASS: blur and pointer departure preserve clipboard, intentional press copies');
      await page.locator('#skyFoundationB [data-sky-drawer-tab="where"]').click();
      await page.waitForSelector('#skyFoundationB .sky-where-when-editor [data-ww-action="refresh-now"]',{timeout:15000});
      await page.waitForSelector('#skyFoundationB [data-draft-heptagram-ready="true"] .sky-where-when-draft-heptagram',{timeout:20000});
@@ -67,6 +87,319 @@ try{
    }
   }catch(e){failed=true;console.error(kind+' FAILED '+e.message);await page.screenshot({path:`sky-remote-${kind}.png`,fullPage:true}).catch(()=>{})}
   await ctx.close();
+ }
+ // Exercise the actual exact revision in Learn at desktop and mobile sizes.
+ for(const viewport of [{width:1280,height:900},{width:390,height:844}]){
+  const ctx=await browser.newContext({viewport,serviceWorkers:'block',hasTouch:viewport.width<600});
+  const page=await ctx.newPage();
+  try{
+   await page.addInitScript(()=>{
+     localStorage.setItem('relphiSkyChartLastModeV1','learn');
+     window.__testedToneFrequencies=[];
+     const create=AudioContext.prototype.createOscillator;
+     AudioContext.prototype.createOscillator=function(){
+       const osc=create.call(this),start=osc.start.bind(osc),set=osc.frequency.setValueAtTime.bind(osc.frequency);let hz;
+       osc.frequency.setValueAtTime=function(value,time){hz=value;return set(value,time)};
+       osc.start=function(...args){window.__testedToneFrequencies.push(hz);return start(...args)};
+       return osc;
+     };
+   });
+   await page.goto(urls[0][1],{waitUntil:'domcontentloaded',timeout:25000});
+   const focus=page.locator('#skyFoundationFocus');
+   await focus.locator('[data-zodiac-summary]').waitFor({state:'visible',timeout:20000});
+   assert.equal(await focus.locator('.sky-foundation-focus-heading h2').count(),0,'No redundant Focus heading');
+   const header=await focus.evaluate(el=>{
+     const rect=s=>{const r=el.querySelector(s).getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right}};
+     return {brand:rect('.sky-chart-page-brand'),modes:rect('.sky-sky-mode-selector'),controls:rect('.sky-focus-heading-controls'),asc:rect('.sky-learn-ascendant'),signs:rect('[data-zodiac-filter]')};
+   });
+   assert.ok(header.brand.top<header.modes.bottom&&header.modes.top<header.brand.bottom,'Mode selector must share brand row');
+   if(viewport.width>=1050)assert.ok(header.asc.top<header.controls.bottom&&header.controls.top<header.asc.bottom,'Ascendant and Focus controls must share second row');
+   const trigger=focus.locator('#skyLearnAscendantSelect');
+   const checkWheel=async()=>{
+    const wheel=await page.locator('#skyFoundationWheelMount .sky-foundation-wheel[data-learn-ascendant]').evaluate(el=>{
+     const layer=el.querySelector('[data-layer="a-houses"]');
+     return {colors:[...layer.querySelectorAll('.sky-foundation-house-sector')].map(n=>n.getAttribute('fill')),opacity:[...layer.querySelectorAll('.sky-foundation-house-sector')].map(n=>Number(n.getAttribute('fill-opacity'))),dividers:[...layer.querySelectorAll('.sky-foundation-learn-divider')].map(n=>[getComputedStyle(n).stroke,getComputedStyle(n).strokeWidth]),palette:[...window.RelphiSkyWheelSpec.COLORS],expectedOpacity:window.RelphiSkyWheelSpec.comparison.houseFillOpacity};
+    });
+    assert.deepEqual(wheel.colors,wheel.palette);
+    assert.ok(wheel.opacity.every(n=>n===wheel.expectedOpacity));
+    assert.equal(wheel.dividers.length,12);
+    assert.ok(wheel.dividers.every(([color,width])=>color==='rgb(0, 0, 0)'&&parseFloat(width)===1));
+   };
+   await page.locator('#skyFoundationWheelMount .sky-foundation-wheel[data-learn-ascendant]').waitFor({state:'visible'});
+   await checkWheel();
+   const core=page.locator('#skyFoundationLearnCore');
+   await core.getByRole('tab',{name:'Houses',exact:true}).click();
+   const houseRows=core.locator('.sky-core-house-tile');
+   assert.equal(await houseRows.count(),12);
+   await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationLearnCore .sky-core-house-tile [data-relphi-house-glyph]')].length===12&&[...document.querySelectorAll('#skyFoundationLearnCore .sky-core-house-tile [data-relphi-house-glyph]')].every(el=>el.dataset.relphiHouseGlyphHydrated==='true'&&el.querySelector('svg .relphi-canonical-glyph')));
+   const houseLayout=await houseRows.evaluateAll(rows=>{
+     const box=el=>el.getBoundingClientRect();
+     const center=r=>({x:r.x+r.width/2,y:r.y+r.height/2});
+     return rows.map(row=>{
+       const r=box(row),house=box(row.querySelector('.relphi-house-medallion')),nameEl=row.querySelector('.sky-foundation-row-name'),name=box(nameEl),descEl=row.querySelector('.sky-core-house-description'),desc=box(descEl),host=row.querySelector('.sky-card-house-toggle-glyph'),g=box(host),svg=box(host.querySelector('svg'));
+       return {ordered:house.right<=desc.left&&desc.right<=g.left&&g.right<=name.left,centered:[house,desc,g,svg,name].every(b=>Math.abs(center(b).y-center(r).y)<1),svgCentered:Math.abs(center(g).x-center(svg).x)<1,width:g.width,svgWidth:svg.width,house:row.dataset.house,description:descEl.textContent,canonical:window.RelphiHouseMedallion.descriptions[row.dataset.house],sign:nameEl.textContent.toLowerCase(),expectedSign:window.RelphiSkyWheelSpec.SIGNS[Number(row.dataset.sign)],fits:row.scrollWidth<=row.clientWidth+1&&nameEl.scrollWidth<=nameEl.clientWidth+1&&descEl.scrollWidth<=descEl.clientWidth+1,colorMatch:(()=>{const c=window.RelphiSkyWheelSpec.COLORS[Number(row.dataset.sign)];const probe=document.createElement('span');probe.style.color=c;row.appendChild(probe);const color=getComputedStyle(probe).color;probe.remove();return getComputedStyle(nameEl).color===color&&host.dataset.relphiHouseGlyphColor===c&&Array.from(host.querySelectorAll('.relphi-canonical-glyph, .relphi-canonical-glyph *')).some(el=>el.getAttribute('fill')===c||el.getAttribute('stroke')===c)})()};
+     });
+   });
+   console.log('CORE HOUSE GLYPH LAYOUT',viewport.width,JSON.stringify(houseLayout));
+   assert.ok(houseLayout.every((r,i)=>r.ordered&&r.centered&&r.svgCentered&&r.fits&&r.colorMatch&&r.description===r.canonical&&r.sign===r.expectedSign&&r.house===String(i+1)&&Math.abs(r.width-(viewport.width<=520?29:30))<1&&Math.abs(r.width-r.svgWidth)<1),'House medallion, exact concern, canonical glyph and sign name in order, centered and unclipped');
+   const sound=core.locator('[data-core-sound]');
+   const tuning=await page.evaluate(()=>{
+     const tones=window.RelphiSkyCoreTones,all=Array.from({length:12},(_,i)=>i);
+     return all.map(root=>tones.sequence(root,all));
+   });
+   assert.equal(new Set(tuning.map(notes=>notes[0].frequency)).size,12);
+   assert.ok(tuning.every(notes=>notes.length===12&&Math.abs(notes[1].frequency/notes[0].frequency-2**(7/12))<1e-12));
+   await sound.click();await page.waitForFunction(()=>window.RelphiSkyCoreTones.enabled);
+   if(viewport.width<600)await houseRows.first().tap();else await houseRows.first().hover();
+   await page.waitForFunction(()=>window.__testedToneFrequencies.length>=12);
+   const heard=await page.evaluate(()=>window.__testedToneFrequencies.slice(0,12));
+   assert.deepEqual(heard,tuning[0].map(note=>note.frequency),'Audio oscillators must sound geometry-derived frequencies in zodiac order');
+   await sound.click();await page.waitForFunction(()=>!window.RelphiSkyCoreTones.enabled);
+   if(viewport.width<600)await houseRows.first().click(); // restore unlocked state after the tap test
+   console.log('CORE TONES PASS',viewport.width,JSON.stringify(heard));
+   await houseRows.first().click();
+   await core.locator('[data-core-content]:not([hidden]) [data-core-title] [data-relphi-house-glyph] svg').waitFor({state:'visible'});
+   const titleGlyph=await core.locator('[data-core-title] .sky-card-house-detail-glyph').evaluate(el=>({width:el.getBoundingClientRect().width,svg:el.querySelector('svg').getBoundingClientRect().width}));
+   assert.ok(Math.abs(titleGlyph.width-(viewport.width<=520?31:32))<1&&Math.abs(titleGlyph.width-titleGlyph.svg)<1,'Expanded Core uses the full-card detail glyph size');
+   await houseRows.first().click();
+   await core.getByRole('tab',{name:'Signs',exact:true}).click();
+   assert.ok(await core.locator('.sky-core-house-tile').evaluateAll(rows=>rows.every(row=>row.querySelector('.sky-card-house-toggle-glyph').getBoundingClientRect().right<=row.querySelector('.sky-foundation-row-name').getBoundingClientRect().left)),'Signs retains its glyph-first order');
+   await core.getByRole('tab',{name:'Houses',exact:true}).click();
+   await page.screenshot({path:'sky-remote-core-houses-'+viewport.width+'.png'});
+
+   const coreErrors=[];
+   page.on('pageerror',e=>{coreErrors.push(e.message);console.log('CORE PAGE ERROR',e.message)});
+   // The actual global menu drives the same three Vocab layers in Learn.
+   await core.getByRole('tab',{name:'Vocab',exact:true}).click();
+   const vocabTokens=core.locator('[data-core-structure] .sky-vocab-token');
+   assert.equal(await vocabTokens.count(),24);
+   const checkCoreVocabColors=async()=>{
+     const rows=await core.locator('.sky-vocab-line[data-vocab-placement-colors="true"]').evaluateAll(lines=>lines.map(line=>{
+       const sign=line.querySelector('[data-vocab-kind="sign"]'),house=line.querySelector('[data-vocab-kind="house"]'),index=window.RelphiSkyWheelSpec.SIGNS.indexOf(sign.dataset.vocabId),n=Number(house.dataset.vocabId.replace('house-',''));
+       const sc=window.RelphiSkyWheelSpec.COLORS[index],hc=window.RelphiHouseMedallion.colors[n-1],style=getComputedStyle(line);
+       return {sign:sign.dataset.vocabId,house:n,signColor:sign.dataset.vocabColor,houseColor:house.dataset.vocabColor,match:sign.dataset.vocabColor===sc&&house.dataset.vocabColor===hc&&line.style.getPropertyValue('--vocab-placement-signs').includes(sc)&&line.style.getPropertyValue('--vocab-placement-houses').includes(hc)&&style.backgroundImage.split('linear-gradient').length===3};
+     }));
+     assert.equal(rows.length,12);
+     assert.ok(rows.every((r,i)=>r.match&&r.house===i+1),'Vocab must use the full card paired sign/house rails');
+     console.log('CORE VOCAB COLOR PASS',viewport.width,JSON.stringify(rows));
+   };
+   await checkCoreVocabColors();
+   const displayTrigger=focus.locator('[data-relationship-display-value]');
+   const displayMenu=page.locator('#skyRelationshipDisplayPopover');
+   await displayTrigger.click();
+   await displayMenu.waitFor({state:'visible'});
+   const ids=['glyphs','referents','names'],levels=['glyph','referent','name'];
+   const allButton=displayMenu.getByRole('button',{name:'All',exact:true});
+   const layers=await displayMenu.locator('[data-shared-display-layer]').count();
+   assert.equal(layers,3);
+   async function assertVocabLayers(mask){
+     const counts=await vocabTokens.evaluateAll((tokens,levels)=>levels.map(level=>tokens.filter(t=>t.querySelector('[data-vocab-level="'+level+'"]')).length),levels);
+     assert.deepEqual(counts,ids.map((_,i)=>mask&(1<<i)?24:0),'Core Vocab must honor the exact independent layer combination '+mask);
+     const state=await page.evaluate(()=>window.RelphiSkyRelationshipDisplay.getState());
+     assert.deepEqual(ids.map(id=>state[id]),ids.map((_,i)=>Boolean(mask&(1<<i))));
+   }
+   for(let mask=1;mask<8;mask++){
+     await allButton.click();
+     for(let i=0;i<ids.length;i++)if(!(mask&(1<<i)))await displayMenu.locator('[data-shared-display-layer="'+ids[i]+'"]').uncheck();
+     await assertVocabLayers(mask);
+     if([1,2,4].includes(mask))assert.equal(await displayMenu.locator('[data-shared-display-layer]:checked').isDisabled(),true,'Cannot deselect the last layer');
+   }
+   // Local progressive reveal works until an explicit global preset resets it.
+   await displayMenu.locator('[data-shared-display-layer="referents"]').uncheck();
+   await displayMenu.locator('[data-shared-display-layer="names"]').uncheck();
+   await page.keyboard.press('Escape');
+   await assertVocabLayers(1);
+   await vocabTokens.first().locator('[data-vocab-level="glyph"]').click();
+   assert.equal(await vocabTokens.first().locator('[data-vocab-level="referent"]').count(),1);
+   await displayTrigger.click();
+   await displayMenu.locator('[data-shared-display-layer="names"]').check();
+   await assertVocabLayers(5);
+   await page.keyboard.press('Escape');
+   await core.getByRole('tab',{name:'Houses',exact:true}).click();
+   await core.getByRole('tab',{name:'Vocab',exact:true}).click();
+   await assertVocabLayers(5);
+   await displayTrigger.click();
+   await allButton.click();
+   await assertVocabLayers(7);
+   await checkCoreVocabColors();
+   await page.keyboard.press('Escape');
+   console.log('CORE VOCAB DISPLAY PASS',viewport.width,'all seven combinations, local reveal, tab reentry');
+   await core.getByRole('tab',{name:'Rulers',exact:true}).click();
+   console.log('CORE RULERS STATE',JSON.stringify(await core.evaluate(el=>({tab:el.dataset.coreActiveTab,selected:el.querySelector('[aria-selected="true"]')?.textContent,key:el.querySelector('[data-core-structure]')?.dataset.structureKey,content:el.querySelector('[data-core-structure]')?.innerText,buttons:el.querySelectorAll('[data-core-ruler]').length,ready:!!window.RelphiSkyCardHitsStructure?.renderTemplate}))));
+   await core.locator('[data-core-ruler="Mars"]').waitFor({state:'visible',timeout:5000});
+   assert.equal(await core.locator('[data-core-ruler]').count(),7,'All seven rulers are available in Learn');
+   assert.equal(await core.getByRole('tab',{name:'Rulers',exact:true}).getAttribute('aria-selected'),'true');
+   await core.locator('[data-core-ruler="Mars"]').click();
+   console.log('CORE RULER FOCUS',JSON.stringify(await core.evaluate(el=>({selected:el.querySelector('[data-core-ruler][aria-pressed="true"]')?.dataset.coreRuler,detail:el.querySelector('.sky-card-ruler-detail')?.innerText}))));
+   await core.locator('.sky-card-ruler-detail').waitFor({state:'visible',timeout:5000});
+   assert.equal(await core.locator('[data-core-ruler="Mars"]').getAttribute('aria-pressed'),'true');
+   assert.match(await core.locator('.sky-card-ruler-detail').innerText(),/Aries/);
+   assert.match(await core.locator('.sky-card-ruler-detail').innerText(),/Scorpio/);
+   assert.deepEqual(await page.locator('#skyFoundationWheelMount [data-interactive="sign"].is-kept').evaluateAll(nodes=>nodes.map(n=>Number(n.dataset.sign)).sort((a,b)=>a-b)),[0,7]);
+   await core.locator('[data-core-clear-ruler]').click();
+   assert.equal(await core.locator('.sky-card-ruler-detail').count(),0);
+   // Expansion replaces the selected compact tile in the original flow; art is not duplicated.
+   const order=await core.locator('.sky-card-rulers-grid [data-core-ruler]').evaluateAll(nodes=>nodes.map(n=>n.dataset.coreRuler));
+   const venus=core.locator('[data-core-ruler="Venus"]');
+   const keptSigns=()=>page.locator('#skyFoundationWheelMount [data-interactive="sign"].is-kept').evaluateAll(nodes=>nodes.map(n=>Number(n.dataset.sign)).sort((a,b)=>a-b));
+   const beforeHover=await core.locator('.sky-card-rulers-grid').innerHTML();
+   // Legacy filter timers may rewrite the hidden raw counter (e.g. 66/66).
+   // Compare the visible list identities and the canonical displayed match count.
+   const relationshipSnapshot=()=>page.evaluate(()=>({
+     count:document.getElementById('skyFoundationRelationshipCount').dataset.matchCount,
+     visible:[...document.querySelectorAll('#skyFoundationRelationshipList>.sky-foundation-relationship-row[data-relation-index]')].filter(r=>!r.hidden&&getComputedStyle(r).display!=='none'&&getComputedStyle(r).visibility!=='hidden').map(r=>r.dataset.relationIndex)
+   }));
+   const countBeforeHover=await relationshipSnapshot();
+   if(viewport.width>=1050)await venus.hover();
+   else await venus.dispatchEvent('pointerover',{pointerType:'mouse',relatedTarget:null});
+   assert.deepEqual(await keptSigns(),[1,6],'Hover previews Venus domiciles on wheel');
+   assert.equal(await core.locator('.sky-card-ruler-detail').count(),0,'Hover must not expand a ruler');
+   assert.equal(await core.locator('.sky-card-rulers-grid').innerHTML(),beforeHover,'Hover must not re-render compact tiles');
+   assert.deepEqual(await relationshipSnapshot(),countBeforeHover,'Hover must not change the actual visible Relationships or displayed match count');
+   if(viewport.width>=1050)await core.getByRole('tab',{name:'Rulers',exact:true}).hover();
+   else await venus.dispatchEvent('pointerout',{pointerType:'mouse',relatedTarget:null});
+   assert.deepEqual(await keptSigns(),[],'Wheel restores on pointer exit');
+   if(viewport.width>=1050)await venus.click();else await venus.tap();
+   const expanded=core.locator('.sky-card-ruler-detail[data-card-ruler-detail="Venus"]');
+   await expanded.waitFor({state:'visible'});
+   const layout=await expanded.evaluate(el=>{
+     const art=el.querySelector('img'),body=el.querySelector('.sky-card-ruler-detail-body'),grid=el.parentElement,ar=art.getBoundingClientRect(),br=body.getBoundingClientRect(),r=el.getBoundingClientRect(),gr=grid.getBoundingClientRect();
+     return {parent:grid.className,next:el.nextElementSibling?.dataset.coreRuler,artRight:ar.right,bodyLeft:br.left,artTop:ar.top,bodyBottom:br.bottom,width:r.width,gridWidth:gr.width,scroll:el.scrollWidth,client:el.clientWidth,artCount:el.querySelectorAll('img').length};
+   });
+   console.log('INLINE RULER TILE',viewport.width,JSON.stringify(layout));
+   assert.equal(layout.parent,'sky-card-rulers-grid');
+   assert.equal(layout.next,'Jupiter','Jupiter must follow expanded Venus in original order');
+   assert.ok(layout.artRight<=layout.bodyLeft&&layout.artTop<layout.bodyBottom,'Art and detail must be side by side');
+   assert.ok(Math.abs(layout.width-layout.gridWidth)<2&&layout.scroll<=layout.client+1,'Expanded tile fits the grid without overflow');
+   assert.equal(layout.artCount,1);
+   assert.deepEqual(await core.locator('.sky-card-rulers-grid [data-core-ruler]').evaluateAll(nodes=>nodes.map(n=>n.dataset.coreRuler)),order);
+   const saturn=core.locator('[data-core-ruler="Saturn"]');
+   if(viewport.width>=1050)await saturn.hover();else await saturn.dispatchEvent('pointerover',{pointerType:'mouse',relatedTarget:null});
+   assert.deepEqual(await keptSigns(),[9,10],'Hover previews Saturn even when Venus is expanded');
+   assert.equal(await expanded.count(),1,'Hover must preserve expanded Venus');
+   assert.equal(await core.locator('.sky-card-ruler-detail[data-card-ruler-detail="Saturn"]').count(),0);
+   if(viewport.width>=1050)await core.getByRole('tab',{name:'Rulers',exact:true}).hover();else await saturn.dispatchEvent('pointerout',{pointerType:'mouse',relatedTarget:null});
+   assert.deepEqual(await keptSigns(),[1,6],'Leaving preview restores selected Venus');
+   console.log('RULER HOVER PASS',viewport.width);
+   await page.screenshot({path:'sky-remote-inline-ruler-'+viewport.width+'.png'});
+   await expanded.locator('[data-core-ruler="Venus"]').click();
+   assert.equal(await core.locator('.sky-card-ruler-detail').count(),0,'Clicking the expanded art collapses it');
+   assert.deepEqual(await core.locator('.sky-card-rulers-grid [data-core-ruler]').evaluateAll(nodes=>nodes.map(n=>n.dataset.coreRuler)),order);
+   await core.getByRole('tab',{name:'Signs',exact:true}).click();
+   assert.equal(await core.locator('[data-core-select-sign]').count(),12);
+   await core.locator('[data-core-select-sign="7"]').click();
+   assert.equal(await core.locator('[data-core-select-sign="7"]').getAttribute('aria-expanded'),'true','Switching tabs must not intercept sign selection');
+   await core.locator('[data-core-select-sign="7"]').click();
+   assert.equal(await core.locator('[data-core-select-sign="7"]').getAttribute('aria-expanded'),'false');
+   await core.getByRole('tab',{name:'Houses',exact:true}).click();
+   assert.equal(await core.getByRole('tab',{name:'Houses',exact:true}).getAttribute('aria-selected'),'true');
+   assert.deepEqual(coreErrors,[]);
+   if(viewport.width>=1050){
+    const boxes=await focus.evaluate(el=>['#skyLearnAscendantSelect','.sky-chart-aspect-summary-choices','.sky-chart-house-summary-choices','[data-zodiac-summary]','[data-relationship-display-value]'].map(s=>{const r=el.querySelector(s).getBoundingClientRect();return {bottom:r.bottom,height:r.height}}));
+    console.log('FOCUS FIELD BOXES',JSON.stringify(boxes));
+    assert.ok(boxes.every(b=>Math.abs(b.height-35)<1),'All fields share height');
+    assert.ok(boxes.every(b=>Math.abs(b.bottom-boxes[0].bottom)<1),'All fields share bottom baseline');
+   }
+   await trigger.click();
+   const menu=page.locator('#skyLearnAscendantMenu');
+   await menu.waitFor({state:'visible'});
+   assert.equal(await menu.getByRole('option').count(),12);
+   const menuFit=await menu.evaluate(el=>{
+     const box=el.getBoundingClientRect(),style=getComputedStyle(el),names=[...el.querySelectorAll('.sky-chart-zodiac-filter-name')];
+     const right=Math.max(...names.map(n=>n.querySelector('.sky-chart-sign-list-figure').getBoundingClientRect().right));
+     const expectedPadding=parseFloat(style.paddingRight)+parseFloat(style.borderRightWidth)+11;
+     return {width:box.width,rightGap:box.right-right,expectedPadding,viewport:innerWidth};
+   });
+   console.log('ASCENDANT MENU FIT',JSON.stringify(menuFit));
+   assert.ok(menuFit.width<330&&menuFit.rightGap<=menuFit.expectedPadding+3,'Ascendant menu fits its longest content without spare checkbox space');
+   assert.equal(await menu.locator('.sky-chart-zodiac-filter-glyph svg').count(),12);
+   await menu.getByRole('option',{name:'Aquarius · Bucket'}).click();
+   assert.equal(await trigger.getAttribute('data-selected-sign'),'10');
+   await focus.locator('[data-ascendant-step="1"]').click();
+   assert.equal(await trigger.getAttribute('data-selected-sign'),'11');
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-learn-ascendant="11"]');
+   await checkWheel();
+   await core.getByRole('tab',{name:'Vocab',exact:true}).click();
+   await checkCoreVocabColors();
+   assert.equal(await core.locator('.sky-vocab-line [data-vocab-kind="sign"]').first().getAttribute('data-vocab-id'),'pisces');
+   await core.getByRole('tab',{name:'Houses',exact:true}).click();
+   await focus.locator('[data-zodiac-summary]').click();
+   await page.locator('#skyChartZodiacFilterMenu').waitFor({state:'visible'});
+   assert.equal(await page.locator('#skyChartZodiacFilterMenu input[type=checkbox]').count(),12);
+   await page.keyboard.press('Escape');
+   for(const [toggle,popover,rowSelector] of [
+    ['[data-aspect-filter-toggle]','.sky-chart-aspect-filter-popover','.sky-chart-aspect-list-item'],
+    ['[data-house-filter-toggle]','.sky-chart-house-filter-popover','.sky-chart-house-list-item']
+   ]){
+    await focus.locator(toggle).click();
+    const popup=page.locator(popover);
+    await popup.waitFor({state:'visible'});
+    const layout=await popup.locator(rowSelector).evaluateAll(rows=>rows.map(row=>{
+     const input=row.querySelector('input[type=checkbox]'),r=row.getBoundingClientRect(),check=input.getBoundingClientRect(),tracks=getComputedStyle(row).gridTemplateColumns.split(' ');
+     return {count:row.querySelectorAll('input[type=checkbox]').length,tracks,rightGap:r.right-check.right,checkboxCenter:check.x+check.width/2,right:r.right};
+    }));
+    console.log('LEARN MENU COLUMNS',viewport.width,popover,JSON.stringify(layout));
+    assert.ok(layout.length>0&&layout.every(r=>r.count===1&&r.tracks.length===2&&Math.abs(parseFloat(r.tracks[1])-40)<1&&Math.abs(r.right-r.checkboxCenter-20)<2),'One 40px checkbox column must reach the row right edge');
+    if(toggle.includes('house')){
+      const menuDescriptions=await popup.locator('.sky-chart-house-menu-description').allTextContents();
+      const coreDescriptions=await core.locator('[data-core-view="houses"] .sky-core-house-description').allTextContents();
+      assert.deepEqual(coreDescriptions,menuDescriptions,'House concerns must match the Focus dropdown verbatim after Ascendant changes');
+      const signs=await core.locator('[data-core-view="houses"] .sky-foundation-row-name').allTextContents();
+      assert.equal(signs[0],'Pisces','House 1 follows the selected Ascendant');
+      console.log('CORE HOUSE CONCERNS PASS',viewport.width,JSON.stringify(coreDescriptions));
+    }
+    await page.screenshot({path:'sky-remote-'+(toggle.includes('aspect')?'aspect':'house')+'-menu-'+viewport.width+'.png'});
+    await page.keyboard.press('Escape');
+   }
+   await page.screenshot({path:'sky-remote-learn-'+viewport.width+'.png',fullPage:true});
+   console.log('LEARN TOOLBAR',viewport.width,JSON.stringify(header));
+   // The click must hide Core in the same task, before async wheel/relationship rebuilding.
+   const immediate=await focus.locator('[data-sky-experience="single"]').evaluate(button=>{
+     button.click();
+     const core=document.getElementById('skyFoundationLearnCore');
+     return {mode:document.documentElement.dataset.skyLastMode,display:getComputedStyle(core).display,hasBox:!!core.getClientRects().length};
+   });
+   assert.deepEqual(immediate,{mode:'single',display:'none',hasBox:false});
+   const toolbarLayout=await focus.evaluate(el=>({root:el.parentElement.id,first:el.parentElement.firstElementChild===el,above:el.getBoundingClientRect().bottom<=document.getElementById('skyFoundationA').getBoundingClientRect().top+1,button:el.querySelector('[data-sky-experience="learn"]').getBoundingClientRect().right<=innerWidth}));
+   assert.deepEqual(toolbarLayout,{root:'skyFoundationRoot',first:true,above:true,button:true});
+   await page.screenshot({path:'sky-remote-explore-toolbar-'+viewport.width+'.png'});
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel:not([data-sky-experience="learn"])');
+   assert.equal(await core.isVisible(),false);
+   await focus.locator('[data-sky-experience="learn"]').click();
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-sky-experience="learn"]');
+   await core.waitFor({state:'visible'});
+   assert.equal(await core.locator('.sky-core-house-tile').count(),12);
+   console.log('CORE MODE VISIBILITY PASS',viewport.width,JSON.stringify(immediate));
+
+   // Start directly in Explore with an established sky and exercise both navigation directions.
+   await page.evaluate(a=>{window.RelphiSkyWorkingStorage.setItem('relphiSkyChartA',JSON.stringify(a));window.RelphiSkyStartupMode.writeMode('single')},a);
+   await page.reload({waitUntil:'domcontentloaded'});
+   await focus.locator('[data-sky-experience="learn"]').waitFor({state:'visible',timeout:20000});
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-single-sky]',{timeout:20000});
+   const topLayout=await focus.evaluate(el=>({first:el.parentElement.firstElementChild===el,above:el.getBoundingClientRect().bottom<=document.getElementById('skyFoundationA').getBoundingClientRect().top+1,button:el.querySelector('[data-sky-experience="learn"]').getBoundingClientRect().right<=innerWidth}));
+   assert.deepEqual(topLayout,{first:true,above:true,button:true});
+   const relationships=page.locator('#skyFoundationRelationships');
+   await relationships.waitFor({state:'visible',timeout:20000});
+   await relationships.locator('.sky-foundation-relationship-row[data-relationship-mode="A-A"]').first().waitFor({state:'visible',timeout:20000});
+   const exploreLayout=await relationships.evaluate(el=>{
+     const p=el.getBoundingClientRect(),w=document.getElementById('skyFoundationWheelMount').getBoundingClientRect(),a=document.getElementById('skyFoundationA').getBoundingClientRect();
+     return {right:p.left>=w.right-1,below:p.top>=w.bottom-1,cardBefore:a.right<=w.left+1,within:p.right<=innerWidth+1,columns:getComputedStyle(document.getElementById('skyFoundationRelationshipList')).gridTemplateColumns.split(' ').length};
+   });
+   if(viewport.width>=1050)assert.ok(exploreLayout.right&&exploreLayout.cardBefore&&exploreLayout.within&&exploreLayout.columns===1,'Explore must show Sky A, wheel, and Relationships from left to right');
+   else assert.ok(exploreLayout.below&&exploreLayout.within,'Narrow Explore must keep Relationships below the wheel without horizontal clipping');
+   console.log('EXPLORE RELATIONSHIPS LAYOUT PASS',viewport.width,JSON.stringify(exploreLayout));
+   await page.screenshot({path:'sky-remote-explore-relationships-'+viewport.width+'.png',fullPage:true});
+   await focus.locator('[data-sky-experience="learn"]').click();
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-sky-experience="learn"]');
+   await core.waitFor({state:'visible'});
+   await focus.locator('[data-sky-experience="single"]').click();
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-single-sky]');
+   assert.equal(await core.isVisible(),false);
+   await focus.locator('[data-sky-experience="learn"]').click();
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-sky-experience="learn"]');
+   console.log('SHARED MODE TOOLBAR PASS',viewport.width,JSON.stringify(topLayout));
+  }catch(e){failed=true;console.error('LEARN '+viewport.width+' FAILED '+e.message)}
+  finally{await ctx.close()}
  }
 }finally{await browser.close()}
 if(failed)process.exitCode=1;

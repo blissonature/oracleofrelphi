@@ -7,19 +7,18 @@ if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyVocabTab
 window.__relphiSkyVocabTabV1=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
-const DISPLAY_KEY='relphiSkyVocabDisplayV1';
 const VIEW_KEY='relphiSkyVocabViewV1';
 const FILTER_KEY='relphiSkyVocabFilterV1';
 const SCOPE_FILTER_KEY='relphiSkyVocabScopeFilterV1';
 const GROUP_OPEN_KEY='relphiSkyVocabGroupOpenV1';
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-const SIGN_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
+const SIGN_COLORS=window.RelphiSkyWheelSpec.COLORS;
 const SIGN_RULERS=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
 const SIGN_POLARITIES=[[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]];
 const HOUSE_POLARITIES=[[1,7],[2,8],[3,9],[4,10],[5,11],[6,12]];
 const SIGN_FIGURES=['Lamb','Bull','Twins','Crab','Lion','Maiden','Scales','Scorpion','Bow','Kid','Bucket','Fishes'];
-const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
-const HOUSE_MENU_DESCRIPTIONS=['','self, body, approach','money, possessions, worth','communication, siblings, local life','home, family, roots','pleasure, creativity, children','work, health, routine','partners, bonds, agreements','loss, death, other people’s resources','travel, belief, higher learning','career, reputation, public life','friends, groups, hopes','solitude, sorrow, hidden things'];
+const HOUSE_COLORS=window.RelphiHouseMedallion.colors;
+const HOUSE_MENU_DESCRIPTIONS=window.RelphiHouseMedallion.descriptions;
 const SIGN_REFERENTS={
   Aries:'initiative, directness, courage, impulse, and beginning',
   Taurus:'embodiment, value, pleasure, endurance, and material continuity',
@@ -258,15 +257,8 @@ function houseInfo(number){return{id:'house-'+number,glyphId:null,name:HOUSE_NAM
 function placementInfo(record){return{id:record.id,glyphId:record.glyphId,name:record.name,referent:placementReferent(record),fallbackGlyph:record.fallbackGlyph||record.name,color:'',value:record.value}}
 function aspectInfo(aspect){return{id:aspect.id,glyphId:aspect.id,name:ASPECT_NAMES[aspect.id]||aspect.id,referent:ASPECT_REFERENTS[aspect.id]||'relationship',fallbackGlyph:ASPECT_NAMES[aspect.id]||aspect.id,color:String(aspect?.color||'')}}
 
-function displayState(){
-  const value=readJson(localStorage,DISPLAY_KEY,null);
-  return{
-    glyphs:value?.glyphs!==false,
-    names:value?.names!==false,
-    referents:value?.referents!==false
-  };
-}
-function saveDisplay(next){writeJson(localStorage,DISPLAY_KEY,next);document.documentElement.dataset.skyVocabGlyphs=next.glyphs?'true':'false';document.documentElement.dataset.skyVocabNames=next.names?'true':'false';document.documentElement.dataset.skyVocabReferents=next.referents?'true':'false'}
+// Both natal Vocab and Learn's template use the canonical Display controller.
+function displayState(){return window.RelphiSkyRelationshipDisplay.getState()}
 function filterState(){
   const value=readJson(sessionStorage,FILTER_KEY,null);
   return{relationships:value?.relationships!==false};
@@ -482,7 +474,7 @@ function renderToken(node){
     node.appendChild(meta);
   }
 }
-function rerenderTokens(root=document){root.querySelectorAll?.('.sky-vocab-token').forEach(renderToken)}
+function rerenderTokens(root=document,{reset=false}={}){root.querySelectorAll?.('.sky-vocab-token').forEach(node=>{if(reset)node.dataset.vocabLocalStage='0';renderToken(node)})}
 
 function phrasePlacement(record){
   const frag=document.createDocumentFragment();
@@ -504,7 +496,7 @@ function placementRailGradient(records,keyOf,colorOf){
 }
 function applyPlacementRails(line,records,slot){
   line.dataset.vocabPlacementColors='true';
-  line.dataset.vocabHouseSystem=activeHouseSystem(slot);
+  line.dataset.vocabHouseSystem=slot?activeHouseSystem(slot):'whole-sign';
   line.style.setProperty('--vocab-placement-signs',placementRailGradient(records,record=>record.sign,key=>SIGN_COLORS[key]));
   line.style.setProperty('--vocab-placement-houses',placementRailGradient(records,record=>record.house||null,key=>HOUSE_COLORS[key-1]));
 }
@@ -1346,7 +1338,7 @@ function basicDropdownShell(slot,kind,label,summary,body){
 }
 function layerDropdownMarkup(slot){
   const state=displayState(),rows=['glyphs','referents','names'].map(id=>'<label class="sky-vocab-filter-row"><span class="sky-vocab-filter-name">'+optionLabel(id)+'</span><span class="sky-vocab-filter-check"><input type="checkbox" data-vocab-layer="'+id+'" data-vocab-slot="'+slot+'" '+(state[id]?'checked':'')+' aria-label="'+optionLabel(id)+'"></span></label>').join('');
-  const body='<div class="sky-vocab-filter-list"><div class="sky-vocab-filter-header"><strong>DISPLAY</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-layer-all="'+slot+'">All</button><button type="button" data-vocab-layer-none="'+slot+'">None</button></span></div>'+rows+'</div>';
+  const body='<div class="sky-vocab-filter-list"><div class="sky-vocab-filter-header"><strong>DISPLAY</strong><span class="sky-vocab-filter-actions"><button type="button" data-vocab-layer-all="'+slot+'">All</button></span></div>'+rows+'</div>';
   return basicDropdownShell(slot,'layers','Display',layerSummary(),body);
 }
 function relationshipChoice(inputMarkup,choiceClass=''){
@@ -1476,7 +1468,7 @@ function setHarmonicWindowFromVocab(input,commit=false){
 function syncControlState(){
   syncHarmonicWindowControls();
   const display=displayState(),filters=filterState();
-  document.querySelectorAll('[data-vocab-layer]').forEach(input=>{input.checked=!!display[input.dataset.vocabLayer]});
+  document.querySelectorAll('[data-vocab-layer]').forEach(input=>{input.checked=!!display[input.dataset.vocabLayer];input.disabled=input.checked&&Object.values(display).filter(Boolean).length===1;});
   document.querySelectorAll('[data-vocab-filter="relationships"]').forEach(input=>{input.checked=filters.relationships!==false});
   ['A','B'].forEach(slot=>{
     const list=records(slot);
@@ -1505,10 +1497,10 @@ function refreshGroupPreviews(root=document){
 }
 function refreshDisplayLayers(){
   syncControlState();
-  document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>{
-    rerenderTokens(panel);
-    refreshGroupPreviews(panel);
-  });
+  // A global preset resets local reveals consistently, regardless of the
+  // currently visible mode. The token renderer remains shared by all Vocab.
+  rerenderTokens(document,{reset:true});
+  refreshGroupPreviews();
 }
 function rerenderPanels(){vocabWheelTouchLine=null;clearVocabWheelContext();syncControlState();document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>renderParagraph(panel.dataset.skyVocabPanel,panel))}
 function releaseWheelIsolationForManualFilter(){
@@ -1516,7 +1508,7 @@ function releaseWheelIsolationForManualFilter(){
   wheelFilterState=null;wheelFilterSpec=null;
   const clear=document.getElementById('skyFoundationClearIsolation');if(clear&&!clear.hidden)clear.click();
 }
-function setLayerAll(checked){const state=displayState();['glyphs','referents','names'].forEach(id=>{state[id]=checked});saveDisplay(state);refreshDisplayLayers()}
+function setLayerAll(){window.RelphiSkyRelationshipDisplay.setState({glyphs:true,names:true,referents:true})}
 function setDimensionAll(slot,kind,checked){
   releaseWheelIsolationForManualFilter();
   const all=kind==='placements'?records(slot).map(record=>record.id):kind==='signs'?ALL_SIGNS:ALL_HOUSES;
@@ -1560,7 +1552,7 @@ function ensurePanel(slot,view){
     input.addEventListener('change',()=>setHarmonicWindowFromVocab(input,true));
     input.addEventListener('blur',()=>setHarmonicWindowFromVocab(input,true));
   });
-  panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();state[input.dataset.vocabLayer]=input.checked;saveDisplay(state);refreshDisplayLayers()}));
+  panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();if(!input.checked&&state[input.dataset.vocabLayer]&&Object.values(state).filter(Boolean).length===1){syncControlState();return}state[input.dataset.vocabLayer]=input.checked;window.RelphiSkyRelationshipDisplay.setState(state)}));
   panel.querySelectorAll('[data-vocab-shared-placement-toggle]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openSharedPlacementDropdown(button)}));
   panel.querySelectorAll('[data-vocab-sign]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'signs',input.dataset.vocabSign,input.checked)));
   panel.querySelectorAll('[data-vocab-house]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'houses',input.dataset.vocabHouse,input.checked)));
@@ -1569,7 +1561,6 @@ function ensurePanel(slot,view){
   panel.querySelectorAll('[data-vocab-dimension-none]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setDimensionAll(slot,button.dataset.vocabDimensionNone,false)}));
   panel.querySelectorAll('[data-vocab-dropdown-toggle]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openDropdown(slot,button.dataset.vocabDropdownToggle)}));
   panel.querySelector('[data-vocab-layer-all]')?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setLayerAll(true)});
-  panel.querySelector('[data-vocab-layer-none]')?.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();setLayerAll(false)});
   panel.querySelectorAll('[data-indeterminate="true"]').forEach(input=>{input.indeterminate=true});
   panel.addEventListener('click',event=>progressive(event));panel.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' ')progressive(event)});
   bindVocabWheelContext(panel);
@@ -1747,7 +1738,7 @@ function installStyles(){
   `;document.head.appendChild(style);
 }
 function render(){
-  queued=false;if(vocabWheelContextLine&&!vocabWheelContextLine.isConnected){vocabWheelTouchLine=null;clearVocabWheelContext()}installStyles();saveDisplay(displayState());['A','B'].forEach(ensureSlot);syncControlState();
+  queued=false;if(vocabWheelContextLine&&!vocabWheelContextLine.isConnected){vocabWheelTouchLine=null;clearVocabWheelContext()}installStyles();['A','B'].forEach(ensureSlot);syncControlState();
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relationshipRowSlots(row){
@@ -1874,7 +1865,7 @@ window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
 window.addEventListener('relphi:sky-house-focus-bridge-changed',event=>mirrorHouseBridge(event.detail));
 window.addEventListener('relphi:sky-zodiac-filter-changed',event=>mirrorZodiacBridge(event.detail));
 window.addEventListener('relphi:sky-house-multiselect-changed',event=>mirrorSharedHouseFilters(event.detail));
-window.addEventListener('relphi:sky-display-changed',schedule);
+window.addEventListener('relphi:sky-display-changed',refreshDisplayLayers);
 document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
 document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
 [
@@ -1882,7 +1873,7 @@ document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
   'relphi:sky-orb-limit-changed','relphi:sky-harmonic-window-model-changed','relphi:sky-harmonic-window-visibility-changed','relphi:sky-placement-multiselect-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
   'relphi:sky-b-restored','relphi:sky-session-recovered'
 ].forEach(name=>window.addEventListener(name,schedule));
-window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key===DISPLAY_KEY)schedule()});
+window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key))schedule()});
 window.addEventListener('pageshow',schedule);
 document.addEventListener('pointerdown',event=>{
   if(!openDropdownState)return;
@@ -1894,9 +1885,22 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')closeDropdow
 window.addEventListener('resize',scheduleDropdownPosition);
 window.addEventListener('scroll',scheduleDropdownPosition,true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
-window.RelphiSkyVocab=Object.freeze({render:schedule,activate,getDisplay:displayState,getFilters:filterState,getScopeFilters:scopeFilterState,getWheelFilters:()=>wheelFilterState,getWheelFilterSpec:()=>wheelFilterSpec,
+function renderTemplate(target,asc){
+  const content=document.createElement('div');content.className='sky-vocab-paragraph';
+  for(let i=0;i<12;i++){
+    const sign=(asc+i)%12,house=i+1,line=document.createElement('div');
+    line.className='sky-vocab-line';
+    applyPlacementRails(line,[{sign,house}],null);
+    line.append(token(signInfo(sign),'sign',true),token(houseInfo(house),'house',false,' in '));
+    content.appendChild(line);
+  }
+  target.replaceChildren(content);
+  target.onclick=progressive;target.onkeydown=event=>{if(['Enter',' '].includes(event.key))progressive(event)};
+}
+window.RelphiSkyVocab=Object.freeze({renderTemplate,render:schedule,activate,getDisplay:displayState,getFilters:filterState,getScopeFilters:scopeFilterState,getWheelFilters:()=>wheelFilterState,getWheelFilterSpec:()=>wheelFilterSpec,
   // Shared source of truth for wheel sector descriptions.
   describeFocus(kind,value){
+    if(kind==='aspect'){const id=String(value||'');return {name:ASPECT_NAMES[id]||id,description:ASPECT_REFERENTS[id]||''}}
     if(kind==='house'){const n=Number(value);return {name:HOUSE_NAMES[n]||'House '+n,description:HOUSE_MENU_DESCRIPTIONS[n]||''}}
     if(kind==='sign'){const name=SIGNS[Number(value)];return {name,description:SIGN_REFERENTS[name]||''}}
     if(kind==='placement'){

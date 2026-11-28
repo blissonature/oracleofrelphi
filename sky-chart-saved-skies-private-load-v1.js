@@ -1,4 +1,4 @@
-// Concealed Saved Skies load list: identify records by the existing three-part Sky fingerprint, never by saved name.
+// Saved Sky fingerprint decorator. The library owner retains readable names and metadata.
 (function(){
 'use strict';
 if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkySavedSkiesPrivateLoadV3)return;
@@ -23,8 +23,8 @@ let queued=false;
 
 const norm=value=>((Number(value)%360)+360)%360;
 const normalized=value=>String(value||'').trim().toLowerCase().replace(/\s+/g,' ');
-function readJson(key,fallback){try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
-function writeJson(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch(_){return false}}
+function readJson(key,fallback){try{const raw=window.RelphiSkyWorkingStorage.getItem(key);return raw?JSON.parse(raw):fallback}catch(_){return fallback}}
+function writeJson(key,value){try{window.RelphiSkyWorkingStorage.setItem(key,JSON.stringify(value));return true}catch(_){return false}}
 function newId(){return `sky-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,8)}`}
 function recordRef(record){return String(record?.id||record?.savedSkyId||record?.metadata?.savedSkyId||`legacy:${normalized(record?.name)}`)}
 function library(){const api=window.RelphiSkySavedSkyIdentity;const list=api?.library?.()||readJson(LIBRARY_KEY,[]);return Array.isArray(list)?list:[]}
@@ -35,15 +35,14 @@ function migrateLegacyIds(){
   let changed=false;
   list.forEach(record=>{if(record&&typeof record==='object'&&!String(record.id||record.savedSkyId||record?.metadata?.savedSkyId||'').trim()){record.id=newId();changed=true}});
   if(!changed||!writeJson(LIBRARY_KEY,list))return;
-  try{window.dispatchEvent(new StorageEvent('storage',{key:LIBRARY_KEY,newValue:localStorage.getItem(LIBRARY_KEY),storageArea:localStorage}))}catch(_){window.dispatchEvent(new Event('storage'))}
+  try{window.dispatchEvent(new StorageEvent('storage',{key:LIBRARY_KEY,newValue:window.RelphiSkyWorkingStorage.getItem(LIBRARY_KEY),storageArea:localStorage}))}catch(_){window.dispatchEvent(new Event('storage'))}
   window.dispatchEvent(new CustomEvent('relphi:saved-sky-library-changed',{detail:{action:'privacy-id-migration'}}));
 }
 
 function installStyle(){
   if(document.getElementById('skySavedSkiesPrivateLoadV1Style'))return;
   const style=document.createElement('style');style.id='skySavedSkiesPrivateLoadV1Style';style.textContent=`
-#skySavedSkiesPopover .sky-saved-list-name,#skySavedSkiesPopover .sky-saved-list-meta{display:none!important}
-#skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{grid-template-columns:minmax(0,1fr) 20px;grid-template-areas:"fingerprint check";min-height:60px;padding:6px 8px}
+#skySavedSkiesPopover .sky-saved-list-item[data-private-sky-fingerprint="true"]{display:flex;flex-wrap:wrap;gap:.3rem;align-items:center;min-height:60px;padding:6px 8px}
 .sky-saved-fingerprint-triptych{grid-area:fingerprint;display:grid;grid-template-columns:48px 48px 30px;gap:9px;align-items:center;justify-content:start;min-width:0}
 .sky-saved-fingerprint-piece{display:grid;place-items:center;width:48px;height:48px;min-width:0;overflow:visible}
 .sky-saved-fingerprint-piece[data-fingerprint-part="card"]{width:30px}
@@ -128,17 +127,15 @@ function redactLoadList(){
   list.querySelectorAll('.sky-saved-list-row').forEach(row=>{
     const item=row.querySelector('[data-saved-sky-ref]');if(!item)return;const ref=String(item.dataset.savedSkyRef||''),record=byRef.get(ref);if(!record)return;
     if(item.dataset.privateSkyFingerprint!=='true'){
-      const current=row.classList.contains('is-active'),check=document.createElement('span');check.className='sky-saved-list-check';check.setAttribute('aria-hidden','true');check.textContent=current?'✓':'';
-      item.replaceChildren(triptych(record),check);item.dataset.privateSkyFingerprint='true';item.setAttribute('aria-label','Load this concealed saved sky.');item.removeAttribute('title');
+      item.prepend(triptych(record));item.dataset.privateSkyFingerprint='true';
     }
-    const del=row.querySelector('[data-saved-delete-ref]');if(del){del.setAttribute('aria-label','Delete this concealed saved sky from Saved skies');del.title='Delete concealed saved sky'}
-    const confirmation=row.querySelector('.sky-saved-delete-confirmation');if(confirmation)confirmation.setAttribute('aria-label','Delete this concealed saved sky?');
+
   });
 }
 function schedule(){if(queued)return;queued=true;queueMicrotask(redactLoadList)}
 function start(){
   installStyle();migrateLegacyIds();schedule();
-  document.addEventListener('click',event=>{if(event.target.closest?.('[data-saved-sky-trigger],#skySavedSkiesPopover'))schedule()},true);
+  document.addEventListener('click',event=>{if(event.target.closest?.('[data-sky-library-browse],#skySavedSkiesPopover'))schedule()},true);
   window.addEventListener('relphi:saved-sky-library-changed',schedule);
 }
 window.RelphiSkyPrivateLoad=Object.freeze({redact:schedule,redactNow:redactLoadList});

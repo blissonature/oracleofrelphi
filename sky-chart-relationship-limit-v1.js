@@ -36,6 +36,7 @@ function syncControl(){
   const next=limit==='all'?'':limit;
   if(!editingCustom&&input.value!==next)input.value=next;
   if(select.value!==preset)select.value=preset;
+  select.title=limit==='all'?'Maximum results: All':'Maximum results: '+limit;
   const custom=preset==='custom';
   input.hidden=!custom;
   input.disabled=!custom;
@@ -187,6 +188,7 @@ function apply(){
   const eligible=all.filter(row=>!hiddenByOther(row));
   // Max applies once to the complete ranked set, not once per relationship scope.
   eligible.forEach((row,index)=>row.classList.toggle(CAP_CLASS,index>=cap));
+  const list=document.getElementById("skyFoundationRelationshipList");if(list)list.dataset.matchingCount=String(eligible.length);
   const shown=Math.min(eligible.length,Number.isFinite(cap)?cap:eligible.length);
   const hiddenByLimit=Math.max(0,eligible.length-shown);
   const count=document.getElementById('skyFoundationRelationshipCount');

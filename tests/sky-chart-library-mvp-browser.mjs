@@ -1,0 +1,125 @@
+import assert from 'node:assert/strict';
+import {chromium} from 'playwright';
+import path from 'node:path';
+
+const browser=await chromium.launch({headless:true});
+const base='http://127.0.0.1:4173/sky-chart.html';
+const sky=(time,name)=>({name,calcProfile:{dateTime:time,instant:time.replace('T','T')+':00.000Z',latitude:40.7276,longitude:-111.87999,location:'Salt Lake City, Utah, USA',timeZone:'America/Denver',houseSystem:'porphyry'},placements:{Sun:{name:'Sun',longitude:195.25,sign:'Libra',degree:15,minute:15},Moon:{name:'Moon',longitude:118,sign:'Cancer',degree:28}}});
+const errors=[];
+async function openPage(context,width=1280){
+ const page=await context.newPage();
+ await page.setViewportSize({width,height:900});
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.route('https://unpkg.com/suncalc@1.9.0/suncalc.js',r=>r.fulfill({path:path.resolve('node_modules/suncalc/suncalc.js'),contentType:'application/javascript'}));
+ await page.route('https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js',r=>r.fulfill({path:path.resolve('node_modules/luxon/build/global/luxon.min.js'),contentType:'application/javascript'}));
+ await page.goto(base,{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>!!window.RelphiSkyWorkingStorage&&!!window.RelphiSkyLibraryRecords&&!!window.RelphiSkySavedSkyIdentity,{timeout:30000});
+ return page;
+}
+try{
+ const context=await browser.newContext();
+ const a=await openPage(context),b=await openPage(context);
+ const sa=sky('1985-10-08T04:37','Natal A'),sb=sky('2000-01-01T12:00','Other B');
+ await a.evaluate(value=>window.RelphiSkyWorkingStorage.setItem('relphiSkyChartA',JSON.stringify(value)),sa);
+ assert.equal(await b.evaluate(()=>window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA')),null,'Second tab must not receive first tab working Sky A');
+ await b.evaluate(value=>window.RelphiSkyWorkingStorage.setItem('relphiSkyChartB',JSON.stringify(value)),sb);
+ assert.equal(await a.evaluate(()=>window.RelphiSkyWorkingStorage.getItem('relphiSkyChartB')),null,'First tab must not receive second tab working Sky B');
+ await a.reload({waitUntil:'domcontentloaded'});
+ await a.waitForFunction(()=>!!window.RelphiSkyWorkingStorage);
+ assert.equal(JSON.parse(await a.evaluate(()=>window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA'))).name,'Natal A','Refresh restores same tab workspace');
+ const record=await a.evaluate(value=>window.RelphiSkyLibraryRecords.saveSky({sky:value,name:'Natal A',defaultName:'4:37 a.m.',owners:[{name:'Person A'}],associates:[{name:'Witness A'}],groups:['Family & Friends']}),sa);
+ assert.equal(record.ok,true,'Save succeeds');
+ await b.waitForFunction(()=>window.RelphiSkyLibraryRecords.library().length===1);
+ assert.equal(await b.evaluate(()=>window.RelphiSkyLibraryRecords.entities().length),2,'Entities shared through library, not working slots');
+ assert.equal(await b.evaluate(()=>window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA')),null,'Library changes never replace working A');
+ const dup=await b.evaluate(value=>window.RelphiSkyLibraryRecords.saveSky({sky:{...value,calcProfile:{...value.calcProfile,houseSystem:'whole-sign'}},name:'Duplicate sky'}),sa);
+ assert.ok(dup.duplicate,'Same Where and When with different house system is duplicate');
+ await a.evaluate(()=>window.RelphiSkySavedSkyIdentity.openPicker('A'));
+ await a.locator('#skySavedSkiesPopover [data-library-query]').waitFor({state:'visible'});
+ assert.equal(await a.locator('#skySavedSkiesPopover [data-saved-sky-ref]').count(),1);
+ await a.locator('[data-library-query]').fill('Natal A');
+ assert.equal(await a.locator('#skySavedSkiesPopover [data-saved-sky-ref]:visible').count(),1);
+ await a.locator('#skySavedSkiesPopover [data-library-pin-ref]').click();
+ assert.equal(await a.evaluate(()=>window.RelphiSkyLibraryRecords.library()[0].metadata.pinned),true);
+ await a.locator('#skySavedSkiesPopover [data-saved-sky-ref]').click();
+ await a.waitForFunction(()=>!!JSON.parse(window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA')||'null')?.metadata?.savedSkyId);
+ await a.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
+ await a.locator('#skyFoundationA [data-sky-loaded-name]').waitFor({state:'visible'});
+ assert.equal((await a.locator('#skyFoundationA [data-sky-loaded-name]').innerText()).trim(),'Natal A');
+ await a.locator('#skyFoundationA [data-sky-loaded-detach]').click();
+ assert.equal(await a.locator('#skyFoundationA [data-sky-loaded-name]').innerText(),'—');
+ const custom=sky('2011-05-23T14:17','Sky A');
+ await a.evaluate(value=>window.RelphiSkyWorkingStorage.setItem('relphiSkyChartA',JSON.stringify(value)),custom);
+ await a.evaluate(()=>window.RelphiSkySaveNameDialog.open('A'));
+ const naming=a.locator('.sky-save-name-overlay');
+ await naming.waitFor({state:'visible'});
+ const proposal=await naming.locator('[data-save-sky-name-input]').inputValue();
+ assert.ok(proposal.includes('2011')&&proposal.includes('Salt Lake City'),'Generated name uses date/location');
+ await naming.locator('[data-save-sky-name-input]').fill('Cardiac Arrest');
+ await naming.locator('[data-entity-query="owner"]').fill('Sage');
+ await naming.getByRole('button',{name:'Create Entity “Sage”'}).click();
+ await naming.locator('[data-entity-query="associate"]').fill('Mother');
+ await naming.getByRole('button',{name:'Create Entity “Mother”'}).click();
+ await naming.locator('[data-save-new-group]').fill('Important Events');
+ await naming.locator('[data-save-add-group]').click();
+ await naming.locator('button[type="submit"]').click();
+ await naming.waitFor({state:'hidden'});
+ const savedCustom=await a.evaluate(()=>window.RelphiSkyLibraryRecords.library().find(s=>s.name==='Cardiac Arrest'));
+ assert.ok(savedCustom?.metadata?.savedSkyId,'New named sky saved to Library');
+ assert.equal(savedCustom.metadata.skyOwners.length,1);
+ assert.equal(savedCustom.metadata.skyAssociates.length,1);
+ assert.ok(savedCustom.metadata.skyGroups.includes('Important Events'));
+
+ // A second attempted save at the same Where and When must offer checklist merge, not clone the sky.
+ await a.evaluate(value=>window.RelphiSkyWorkingStorage.setItem('relphiSkyChartA',JSON.stringify(value)),{...custom,name:'Sky A'});
+ await a.evaluate(()=>window.RelphiSkySaveNameDialog.open('A'));
+ await naming.waitFor({state:'visible'});
+ await naming.locator('[data-entity-query="associate"]').fill('Doctor');
+ await naming.getByRole('button',{name:'Create Entity “Doctor”'}).click();
+ await naming.locator('button[type="submit"]').click();
+ await naming.locator('[data-save-merge-review]').waitFor({state:'visible'});
+ assert.ok((await naming.locator('[data-merge-role]:checked').count())>=1);
+ await naming.getByRole('button',{name:'Merge Skies'}).click();
+ await naming.waitFor({state:'hidden'});
+ const afterMerge=await a.evaluate(()=>({skies:window.RelphiSkyLibraryRecords.library(),entities:window.RelphiSkyLibraryRecords.entities()}));
+ assert.equal(afterMerge.skies.length,2,'Duplicate save must not create new sky');
+ assert.ok(afterMerge.skies.find(s=>s.name==='Cardiac Arrest')?.metadata?.skyAssociates.length>=2);
+
+ // Recovery keeps 14 recent entries; overflow enters eviction without silent deletion.
+ await a.evaluate(list=>list.forEach(value=>window.RelphiSkyWorkingStorage.setItem('relphiSkyChartA',JSON.stringify(value))),Array.from({length:16},(_,i)=>sky('2026-11-'+String(i+1).padStart(2,'0')+'T08:00','Temporary '+i)));
+ const recovery=await a.evaluate(()=>window.RelphiSkyWorkingStorage.recovery());
+ assert.equal(recovery.recent.length,14);
+ assert.ok(recovery.eviction.length>=2,'Earlier unsaved sky snapshots are also retained in eviction');
+ await a.evaluate(()=>window.RelphiSkySavedSkyIdentity.openPicker('A'));
+ await a.locator('#skySavedSkiesPopover [data-library-view="eviction"]').click();
+ assert.equal(await a.locator('#skySavedSkiesPopover [data-library-save-recovery]').count(),recovery.eviction.length);
+ await a.locator('#skySavedSkiesPopover [data-library-save-recovery]').first().click();
+ await naming.waitFor({state:'visible'});
+ await naming.locator('button[type="submit"]').click();
+ await naming.waitFor({state:'hidden'});
+ assert.equal((await a.evaluate(()=>window.RelphiSkyLibraryRecords.library())).length,3,'Evicted sky is saved permanently');
+ // Saved sky details are legible by default. Edit unlocks all Where and When fields.
+ await a.evaluate(()=>window.RelphiSkyWhereWhen.editSaved('A'));
+ const editForm=a.locator('#skyFoundationA .sky-where-when-editor[data-slot="A"]');
+ await editForm.waitFor({state:'visible'});
+ const oldId=await a.evaluate(()=>JSON.parse(window.RelphiSkyWorkingStorage.getItem('relphiSkyChartA'))?.metadata?.savedSkyId);
+ assert.ok(oldId);
+ await editForm.evaluate(form=>{
+   const date=form.querySelector('[data-ww-field="date"]'),time=form.querySelector('[data-ww-field="time"]');
+   date.value='2026-07-01';time.value='23:30';time.dispatchEvent(new Event('change',{bubbles:true}));
+ });
+ await editForm.locator('[data-ww-action="toggle-time-mode"]').click();
+ assert.equal(await editForm.locator('[data-ww-field="date"]').inputValue(),'2026-07-02','Local to UTC should advance the visible date across midnight');
+ await editForm.locator('[data-ww-action="toggle-time-mode"]').click();
+ assert.equal(await editForm.locator('[data-ww-field="date"]').inputValue(),'2026-07-01','UTC to Local restores the original date');
+ assert.equal(await editForm.locator('[data-ww-field="time"]').inputValue(),'23:30','Round-trip preserves time');
+ const mobile=await openPage(context,390);
+ await mobile.locator('#skyFoundationA [data-sky-drawer-tab="where"]').click();
+ await mobile.locator('#skyFoundationA [data-sky-library-browse]').click();
+ await mobile.locator('#skySavedSkiesPopover [data-library-query]').waitFor({state:'visible'});
+ const width=await mobile.locator('#skySavedSkiesPopover').evaluate(el=>({width:el.getBoundingClientRect().width,screen:innerWidth}));
+ assert.ok(width.width<=width.screen+1,'Mobile library fits viewport');
+ assert.deepEqual(errors,[],'No unhandled page errors');
+ console.log('PASS_SKY_LIBRARY_MVP',JSON.stringify({tabs:'isolated',saved:'shared',entities:true,groups:true,pin:true,duplicate:true,recovery:true,evictionSave:true,localUtcDateRollover:true,mobileWidth:width}));
+ await mobile.close();await a.close();await b.close();await context.close();
+}finally{await browser.close()}

@@ -368,7 +368,9 @@
   function ensureControl() {
     const bar = filterBar();
     if (!bar) return false;
-    bar.querySelector('[data-filter="aspect"]')?.closest('label')?.remove();
+    const learn=window.RelphiSkyStartupMode?.readMode?.()==='learn';
+    const simple=bar.querySelector('[data-filter="aspect"]')?.closest('label');
+    if(simple)simple.hidden=true;
     let owner = bar.querySelector('[data-aspect-filter="combined"]');
     if (!owner) owner = createControl();
     if (!owner.isConnected) {
@@ -378,6 +380,7 @@
       else if (placements) placements.insertAdjacentElement('beforebegin', owner);
       else bar.prepend(owner);
     }
+    owner.querySelector('.sky-chart-aspect-filter-label').textContent=learn?'Aspects by Sign':'Aspects';
     bar.dataset.multiselectAspectFilters = 'true';
     if (!popover()?.querySelector('[data-aspect-list]')) renderControl();
     return true;
@@ -385,14 +388,14 @@
 
   function refresh() {
     queued = false;
-    if (whereWhenEditing()) return;
+    if (whereWhenEditing()&&window.RelphiSkyStartupMode?.readMode?.()!=='learn') return;
     if (!ensureControl()) return;
     applyFilters();
     positionPortal();
   }
 
   function schedule() {
-    if (queued || whereWhenEditing()) return;
+    if (queued || (whereWhenEditing()&&window.RelphiSkyStartupMode?.readMode?.()!=='learn')) return;
     queued = true;
     requestAnimationFrame(refresh);
   }
@@ -428,7 +431,8 @@
       'relphi:sky-house-multiselect-changed',
       'relphi:sky-single-sky-aspects-rendered',
       'relphi:sky-intrasky-relationships-ready',
-      'relphi:sky-intrasky-b-relationships-ready'
+      'relphi:sky-intrasky-b-relationships-ready',
+      'relphi:sky-experience-changed'
     ].forEach(name => window.addEventListener(name, schedule));
     window.addEventListener('relphi:sky-foundation-filter-changed', filterChanged);
 

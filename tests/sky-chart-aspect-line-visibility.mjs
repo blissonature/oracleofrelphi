@@ -78,12 +78,7 @@ console.log('FOCUS_DESKTOP_CONTROL_ORDER',JSON.stringify(focusControlOrder));
 assert.ok(focusControlOrder.display>=0,'Display must stay in the Focus heading controls.');
 assert.ok(focusControlOrder.harmonic>focusControlOrder.display,'Harmonic Window must sit to the right of Display.');
 assert.ok(focusControlOrder.actions>focusControlOrder.harmonic,'Copy and Download must remain to the far right of Harmonic Window.');
-const focusHeaderGap=await page.evaluate(()=>{
-  const title=document.querySelector('#skyFoundationFocus>.sky-foundation-focus-heading h2')?.getBoundingClientRect();
-  const first=document.querySelector('#skyFoundationFocus .sky-focus-heading-controls>[data-relationship-display-control]')?.getBoundingClientRect();
-  return title&&first?first.left-title.right:null;
-});
-assert.ok(focusHeaderGap!==null&&focusHeaderGap>=98,'Focus needs a 100px visual break between its header and first control.');
+assert.equal(await page.locator('#skyFoundationFocus > .sky-foundation-focus-heading h2').count(),0,'No redundant Focus label or title gap.');
 
 await page.locator('#skyFoundationFocus [data-relationship-display-value]').click();
 await page.waitForSelector('#skyRelationshipDisplayPopover:not([hidden])',{timeout:5000});

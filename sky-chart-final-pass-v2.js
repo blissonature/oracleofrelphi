@@ -19,7 +19,7 @@
     quintile:'Quintile', square:'Square', trine:'Trine', 'tri-octile':'Tri-Octile',
     'bi-quintile':'Bi-Quintile', quincunx:'Quincunx', opposition:'Opposition'
   };
-  const filters = { aspect:'all', placement:'all', houseA:'all', houseB:'all' };
+  const filters = { aspect:'all', placement:'all', houseA:'all', houseB:'all', sign:'all' };
   const baseSetItem = Storage.prototype.setItem;
   let enriching = false;
   let queued = false;
@@ -45,7 +45,7 @@
   }
 
   function read(slot) {
-    try { return JSON.parse(localStorage.getItem(KEYS[slot]) || 'null'); }
+    try { return JSON.parse(window.RelphiSkyWorkingStorage.getItem(KEYS[slot]) || 'null'); }
     catch (_) { return null; }
   }
 
@@ -182,7 +182,7 @@
     if (!enriching && this === localStorage && Object.values(KEYS).includes(String(key))) {
       try {
         const next = JSON.parse(String(raw));
-        const previous = JSON.parse(localStorage.getItem(String(key)) || 'null');
+        const previous = JSON.parse(window.RelphiSkyWorkingStorage.getItem(String(key)) || 'null');
         enriching = true;
         return baseSetItem.call(this, key, JSON.stringify(enrichPayload(next, previous)));
       } catch (_) {
@@ -197,7 +197,7 @@
   function dispatch(slot) {
     try {
       window.dispatchEvent(new StorageEvent('storage', {
-        key:KEYS[slot], newValue:localStorage.getItem(KEYS[slot]), storageArea:localStorage
+        key:KEYS[slot], newValue:window.RelphiSkyWorkingStorage.getItem(KEYS[slot]), storageArea:localStorage
       }));
     } catch (_) {
       const event = new Event('storage');
@@ -212,7 +212,7 @@
     const before = JSON.stringify(current);
     const after = JSON.stringify(enrichPayload(current, current));
     if (before === after) return false;
-    localStorage.setItem(KEYS[slot], after);
+    window.RelphiSkyWorkingStorage.setItem(KEYS[slot], after);
     if (emit) dispatch(slot);
     return true;
   }
@@ -392,7 +392,7 @@
     Object.values(source).forEach(item => {
       if (Number.isFinite(Number(item?.longitude))) item.house = houseFor(Number(item.longitude), result.cusps);
     });
-    localStorage.setItem(KEYS[slot], JSON.stringify(value));
+    window.RelphiSkyWorkingStorage.setItem(KEYS[slot], JSON.stringify(value));
     dispatch(slot);
   }
 
@@ -409,10 +409,9 @@
   }
 
   function ensureFocusStructure(relationshipPanel, bar) {
-    if (!relationshipPanel || !bar) return;
-
+    const root = document.getElementById('skyFoundationRoot');
     const comparison = document.getElementById('skyFoundationComparison');
-    if (!comparison) return;
+    if (!root || !comparison) return;
 
     let focusPanel = document.getElementById('skyFoundationFocus');
     if (!focusPanel) {
@@ -420,7 +419,7 @@
       focusPanel.id = 'skyFoundationFocus';
       focusPanel.className = 'sky-foundation-focus-panel';
       focusPanel.setAttribute('aria-label', 'Focus');
-      focusPanel.innerHTML = '<header class="sky-foundation-focus-heading"><h2>Focus</h2><span class="sky-focus-heading-controls" aria-label="Focus display controls"></span></header>';
+      focusPanel.innerHTML = '<header class="sky-foundation-focus-heading"><div class="sky-chart-page-brand"><div><h1>Sky <span class="red">Chart</span></h1><p>by Oracle of <span class="red">Relphi</span></p></div></div><span class="sky-focus-heading-controls" aria-label="Focus display controls"></span></header>';
     }
 
     const focusHeading = focusPanel.querySelector(':scope > .sky-foundation-focus-heading');
@@ -430,15 +429,66 @@
       controls.setAttribute('aria-label', 'Focus display controls');
       focusHeading.appendChild(controls);
     }
-    if (bar.parentElement !== focusPanel) focusPanel.appendChild(bar);
 
-    const wheelMount = comparison.querySelector(':scope > #skyFoundationWheelMount');
-    if (wheelMount) {
-      if (focusPanel.parentElement !== comparison || focusPanel.nextElementSibling !== wheelMount) comparison.insertBefore(focusPanel, wheelMount);
-    } else if (!focusPanel.isConnected) {
-      comparison.prepend(focusPanel);
+    // The Focus header owns the three mutually exclusive experiences.
+    let modes = focusHeading.querySelector(':scope > .sky-sky-mode-selector');
+    if (!modes) {
+      modes = document.createElement('nav');
+      modes.className = 'sky-sky-mode-selector';
+      modes.setAttribute('aria-label', 'Sky Chart mode');
+      modes.innerHTML = '<button type="button" data-sky-experience="learn">Learn</button><button type="button" data-sky-experience="single">Explore</button><button type="button" data-sky-experience="comparison">Compare</button>';
+      focusHeading.insertBefore(modes,focusHeading.querySelector('.sky-focus-heading-controls'));
+      modes.addEventListener('click', event => {
+        const button = event.target.closest('[data-sky-experience]');
+        if (!button) return;
+        const chosen = button.dataset.skyExperience;
+        const startup = window.RelphiSkyStartupMode;
+        if (!startup?.writeMode) return;
+        if(chosen==='comparison'&&!startup.hasStoredSkyA())return;
+        const mode=startup.writeMode(chosen);
+        startup.syncRoot?.();
+        window.dispatchEvent(new CustomEvent('relphi:sky-experience-changed',{detail:{mode}}));
+        // Mode changes do not assign a sky or open a second slot implicitly.
+      });
     }
+    let ascendantControl = focusPanel.querySelector(':scope > .sky-learn-ascendant');
+    if (!ascendantControl) {
+      ascendantControl = document.createElement('div');
+      ascendantControl.className = 'sky-learn-ascendant';
+      const label=document.createElement('label');label.textContent='Ascendant';label.htmlFor='skyLearnAscendantSelect';ascendantControl.appendChild(label);
+      const picker=window.RelphiSkyZodiacFilter.createAscendantPicker();
+      ascendantControl.syncAscendant=picker.sync;
+      const step=direction=>{
+        const button=document.createElement('button');button.type='button';
+        button.className='sky-learn-ascendant-step';button.dataset.ascendantStep=String(direction);
+        button.innerHTML='<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="'+(direction<0?'M12 6l-4 4 4 4':'M8 6l4 4-4 4')+'"/></svg>';
+        const name=direction<0?'Previous rising sign':'Next rising sign';
+        button.setAttribute('aria-label',name);button.title=name;
+        button.addEventListener('click',()=>{
+          const startup=window.RelphiSkyStartupMode;
+          const next=(startup.readLearnAscendant()+direction+12)%12;
+          startup.setLearnAscendant(next);picker.sync();
+        });
+        return button;
+      };
+      ascendantControl.append(step(-1),picker.trigger,step(1));
+      focusHeading.after(ascendantControl);
+    }
+    const currentMode = window.RelphiSkyStartupMode?.readMode?.() || 'single';
+    ascendantControl.hidden = currentMode !== 'learn';
+    ascendantControl.syncAscendant();
+    modes.querySelectorAll('[data-sky-experience]').forEach(button => {
+      const active = button.dataset.skyExperience === currentMode;
+      const unavailable=button.dataset.skyExperience==='comparison'&&!window.RelphiSkyStartupMode.hasStoredSkyA();
+      button.disabled=unavailable;
+      button.title=unavailable?'Establish Sky A in Explore before comparing.':'';
+      button.setAttribute('aria-pressed',String(active));
+      button.classList.toggle('is-active',active);
+    });
+    if (bar && bar.parentElement !== focusPanel) focusPanel.appendChild(bar);
+    if (focusPanel.parentElement !== root || root.firstElementChild !== focusPanel) root.prepend(focusPanel);
     comparison.querySelector(':scope > .sky-foundation-heading')?.remove();
+    if (!relationshipPanel) return;
 
     let relationshipControls = relationshipPanel.querySelector(':scope > .sky-relationship-controls');
     if (!relationshipControls) {
@@ -454,17 +504,60 @@
     if (focusHeading && focusPanel.firstElementChild !== focusHeading) focusPanel.prepend(focusHeading);
   }
 
+  function syncLearnFilters(bar) {
+    const learn=window.RelphiSkyStartupMode?.readMode?.()==='learn';
+    const enteringLearn=learn&&bar.dataset.learnFocus!=='true';
+    bar.dataset.learnFocus=String(learn);
+    for(const selector of ['[data-filter="placement"]','[data-filter="houseB"]','[data-house-system-filter]']){const label=bar.querySelector(selector)?.closest('label');if(label)label.hidden=learn;}
+    for(const name of ['aspect','houseA','sign']){const label=bar.querySelector('[data-filter="'+name+'"]')?.closest('label');if(label)label.hidden=true;}
+    if(enteringLearn){
+      filters.aspect='all';filters.houseA='all';filters.sign='all';
+      ['aspect','houseA','sign'].forEach(name=>{
+        const select=bar.querySelector('[data-filter="'+name+'"]');
+        if(select)select.value='all';
+      });
+    }
+    const heading=bar.closest('#skyFoundationFocus');
+    heading?.querySelectorAll('.sky-orb-number-field,[data-harmonic-window-input]').forEach(control=>{
+      const field=control.closest('.sky-orb-number-field')||control;
+      if(learn)field.remove();else field.hidden=false;
+    });
+    const names=learn?['Aspects by Sign','Placements','Houses','Sky B House','House System']:['Aspects','Placements','Sky A House','Sky B House','House System'];
+    const select=bar.querySelector('[data-filter="aspect"]');
+    if(select&&select.dataset.learnOptions!==String(learn)){
+      const keep=select.value;
+      const options=learn?['all','semi-sextile','sextile','square','trine','quincunx','opposition']:Object.keys(ASPECT_LABELS);
+      select.replaceChildren(...options.map(value=>new Option(ASPECT_LABELS[value],value)));
+      select.value=options.includes(keep)?keep:'all';
+      filters.aspect=select.value;
+      select.dataset.learnOptions=String(learn);
+    }
+    [...bar.querySelectorAll(':scope > label')].slice(0,5).forEach((label,index)=>{
+      if(label.firstChild?.nodeType===Node.TEXT_NODE)label.firstChild.textContent=names[index];
+    });
+    if(!learn){
+      if(bar.dataset.previousExperience==='learn'){
+        filters.aspect='all';const aspect=bar.querySelector('[data-filter="aspect"]');if(aspect)aspect.value='all';
+      }
+      filters.sign='all';filters.houseA='all';filters.houseB='all';
+      const sign=bar.querySelector('[data-filter="sign"]');if(sign)sign.value='all';
+      const house=bar.querySelector('[data-filter="houseA"]');if(house)house.value='all';
+    }
+    else{filters.placement='all';filters.houseB='all';const placement=bar.querySelector('[data-filter="placement"]');if(placement)placement.value='all';}
+    bar.dataset.previousExperience=learn?'learn':'natal';
+  }
+
   function addFilters() {
     const relationshipPanel = document.getElementById('skyFoundationRelationships');
-    if (!relationshipPanel) return;
     let focusPanel = document.getElementById('skyFoundationFocus');
-    let bar = focusPanel?.querySelector(':scope > .sky-chart-filter-bar') || relationshipPanel.querySelector(':scope > .sky-chart-filter-bar');
+    let bar = focusPanel?.querySelector(':scope > .sky-chart-filter-bar') || relationshipPanel?.querySelector(':scope > .sky-chart-filter-bar');
+    if (!relationshipPanel) {ensureFocusStructure(null,bar);return;}
     if (!bar) {
       bar = document.createElement('div');
       bar.className = 'sky-chart-filter-bar';
     }
     ensureFocusStructure(relationshipPanel, bar);
-    if (bar.dataset.finalFilterOwner === 'true') return;
+    if (bar.dataset.finalFilterOwner === 'true') {syncLearnFilters(bar);window.RelphiSkyZodiacFilter.install(bar);return;}
     bar.dataset.finalFilterOwner = 'true';
     const aspectOptions = Object.entries(ASPECT_LABELS).map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
     const houses = ['all', ...Array.from({ length:12 }, (_, index) => String(index + 1))]
@@ -472,13 +565,16 @@
     const current = read('A')?.calcProfile?.houseSystem || read('B')?.calcProfile?.houseSystem || 'whole-sign';
     const systems = Object.entries(HOUSE_SYSTEMS)
       .map(([value, label]) => `<option value="${value}"${value === current ? ' selected' : ''}>${label}</option>`).join('');
-    bar.innerHTML = `<label>Aspects<select data-filter="aspect">${aspectOptions}</select></label><label>Placements<select data-filter="placement"><option value="all">All</option></select></label><label>Sky A House<select data-filter="houseA">${houses}</select></label><label>Sky B House<select data-filter="houseB">${houses}</select></label><label>House System<select data-house-system-filter>${systems}</select></label>`;
+    const signs = ['all',...SIGNS].map(value=>`<option value="${value==='all'?'all':String(SIGNS.indexOf(value))}">${value==='all'?'All':value}</option>`).join('');
+    bar.innerHTML = `<label>Aspects<select data-filter="aspect">${aspectOptions}</select></label><label>Placements<select data-filter="placement"><option value="all">All</option></select></label><label>Sky A House<select data-filter="houseA">${houses}</select></label><label>Sky B House<select data-filter="houseB">${houses}</select></label><label>House System<select data-house-system-filter>${systems}</select></label><label>Signs<select data-filter="sign">${signs}</select></label>`;
+    syncLearnFilters(bar);
     bar.addEventListener('change', event => {
       if (event.target.matches('[data-house-system-filter]')) return changeHouseSystem(event.target);
       if (!event.target.dataset.filter) return;
       filters[event.target.dataset.filter] = event.target.value;
       applyFilters();
     });
+    window.RelphiSkyZodiacFilter.install(bar);
     refreshPlacementFilter();
   }
 
@@ -517,11 +613,14 @@
     });
     document.querySelectorAll('.sky-foundation-relationship-row').forEach(row => {
       const label = String(row.getAttribute('aria-label') || '').toLowerCase();
-      const visible =
+      const visible = window.RelphiSkyStartupMode?.readMode?.()==='learn'|| (
         (filters.aspect === 'all' || label.includes(filters.aspect)) &&
         (filters.placement === 'all' || row.dataset.leftPlacement === filters.placement || row.dataset.rightPlacement === filters.placement) &&
-        (filters.houseA === 'all' || row.dataset.leftHouse === filters.houseA) &&
-        (filters.houseB === 'all' || row.dataset.rightHouse === filters.houseB);
+        (filters.houseA === 'all' || (window.RelphiSkyStartupMode?.readMode?.()==='learn'
+          ?[row.dataset.leftSign,row.dataset.rightSign].includes(String((Number(document.documentElement.dataset.skyLearnAscendant||0)+Number(filters.houseA)-1)%12))
+          :row.dataset.leftHouse === filters.houseA)) &&
+        (filters.houseB === 'all' || row.dataset.rightHouse === filters.houseB) &&
+        (filters.sign === 'all' || row.dataset.leftSign === filters.sign || row.dataset.rightSign === filters.sign));
       row.classList.toggle('sky-chart-filter-hidden', !visible);
       (linesByIndex.get(String(row.dataset.relationIndex || '')) || [])
         .forEach(node => node.classList.toggle('sky-chart-filter-hidden', !visible));
@@ -547,7 +646,13 @@
 
   function refresh() {
     queued = false;
-    if (whereWhenEditing()) return;
+    if (whereWhenEditing() && window.RelphiSkyStartupMode?.readMode?.()!=='learn') {
+      // Keep the shared toolbar and committed-chart controls initialized without touching the draft editor.
+      addFilters();
+      refreshPlacementFilter();
+      applyFilters();
+      return;
+    }
     ['A','B'].forEach(slot => {
       addHeaderActions(slot);
       addEditorControls(slot);
@@ -561,7 +666,7 @@
   }
 
   function schedule() {
-    if (queued || whereWhenEditing()) return;
+    if (queued) return;
     queued = true;
     requestAnimationFrame(refresh);
   }
@@ -586,6 +691,8 @@
     }).observe(root, { childList:true, subtree:true });
     window.addEventListener('relphi:sky-foundation-ready', schedule);
     window.addEventListener('relphi:sky-foundation-interactions-ready', schedule);
+    window.addEventListener('relphi:sky-experience-changed', schedule);
+    window.addEventListener('relphi:sky-learn-ascendant-changed', schedule);
     window.addEventListener('storage', schedule);
     schedule();
   }

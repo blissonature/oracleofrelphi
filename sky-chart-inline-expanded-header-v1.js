@@ -142,14 +142,14 @@ function installStyle(){
       row-gap:5px!important;
       padding-bottom:5px!important;
     }
-    .sky-foundation-relationship-row.is-inline-expanded .inline-rel-visual{
+    .sky-foundation-relationship-row.is-inline-expanded:not([data-learn-relationship="true"]) .inline-rel-visual{
       grid-template-columns:minmax(54px,70px) minmax(100px,1fr) minmax(54px,70px)!important;
       gap:7px!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded .inline-rel-wheel-stage{
       width:min(100%,112px)!important;
     }
-    .sky-foundation-relationship-row.is-inline-expanded .inline-rel-card-art{
+    .sky-foundation-relationship-row.is-inline-expanded:not([data-learn-relationship="true"]) .inline-rel-card-art{
       max-width:62px!important;
     }
     .sky-foundation-relationship-row.is-inline-expanded .inline-rel-progressive-strip{

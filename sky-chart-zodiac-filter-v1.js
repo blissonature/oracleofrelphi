@@ -20,11 +20,11 @@ const SIGNS=[
   ['aquarius','Aquarius','Bucket'],
   ['pisces','Pisces','Fishes']
 ];
-const COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
+const COLORS=window.RelphiSkyWheelSpec.COLORS;
 const ALL=SIGNS.map((_,index)=>String(index));
 const STORAGE_KEY='relphiSkyZodiacFilterV1';
 let selected=new Set(ALL),queued=false,root=null,button=null,menu=null;
-try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(Array.isArray(saved))selected=new Set(saved.map(String).filter(value=>ALL.includes(value)))}catch(_){}
+try{const saved=JSON.parse(window.RelphiSkyWorkingStorage.getItem(STORAGE_KEY)||'null');if(Array.isArray(saved))selected=new Set(saved.map(String).filter(value=>ALL.includes(value)))}catch(_){}
 
 function canonicalGlyph(host,id,color){
   const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent,entry=registry&&(registry.get(id)||registry.resolve(id));
@@ -35,6 +35,15 @@ function canonicalGlyph(host,id,color){
   bubble.circle.style.opacity='0';bubble.circle.setAttribute('aria-hidden','true');
 }
 
+function signPresentation(index){
+  const [id,name,figure]=SIGNS[index];
+  const cell=document.createElement('span');cell.className='sky-chart-zodiac-filter-name';
+  const art=document.createElement('span');art.className='sky-chart-zodiac-filter-glyph';canonicalGlyph(art,id,COLORS[index]);
+  const copy=document.createElement('span');copy.className='sky-chart-zodiac-filter-copy';
+  const text=document.createElement('span');text.className='sky-chart-sign-list-label';text.textContent=name;
+  const figureText=document.createElement('span');figureText.className='sky-chart-sign-list-figure';figureText.textContent=figure;
+  copy.append(text,figureText);cell.append(art,copy);return cell;
+}
 function summary(){
   if(selected.size===12)return'All';
   if(selected.size===0)return'None';
@@ -52,13 +61,13 @@ function syncChecks(){
 function apply(){
   queued=false;
   const all=selected.size===12;
-  document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index]').forEach(row=>{
+  document.querySelectorAll('.sky-foundation-relationship-row[data-relation-index], [data-layer="aspects"] > .sky-foundation-aspect[data-learn-relation="true"]').forEach(row=>{
     const match=all||selected.has(String(row.dataset.leftSign))||selected.has(String(row.dataset.rightSign));
     row.classList.toggle('sky-chart-sign-filter-hidden',!match);
   });
   syncChecks();
   document.documentElement.dataset.skyZodiacFilterSource='manual';
-  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(Array.from(selected)))}catch(_){}
+  try{window.RelphiSkyWorkingStorage.setItem(STORAGE_KEY,JSON.stringify(Array.from(selected)))}catch(_){}
   window.dispatchEvent(new CustomEvent('relphi:sky-zodiac-filter-changed',{detail:{signs:Array.from(selected,Number),source:'manual'}}));
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(apply)}
@@ -80,12 +89,10 @@ function closeMenu(){
   button?.setAttribute('aria-expanded','false');
 }
 
-function positionMenu(){
+function positionPopup(menu,button){
   if(!menu||menu.hidden||!button)return;
   const rect=button.getBoundingClientRect(),margin=12,gap=5;
-  const width=Math.max(220,Math.min(330,window.innerWidth-margin*2));
-  const left=Math.max(margin,Math.min(rect.left,window.innerWidth-width-margin));
-  menu.style.width=`${width}px`;
+  menu.style.width='';
 
   // Let the menu use its natural height whenever the viewport can hold it. Only turn
   // on scrolling when the full sign list genuinely cannot fit on screen.
@@ -109,6 +116,8 @@ function positionMenu(){
     menu.style.overflowY='hidden';
   }
 
+  const width=menu.getBoundingClientRect().width;
+  const left=Math.max(margin,Math.min(rect.left,window.innerWidth-width-margin));
   const belowTop=rect.bottom+gap;
   const aboveTop=rect.top-renderedHeight-gap;
   let top;
@@ -122,6 +131,8 @@ function positionMenu(){
   menu.dataset.openDirection=top<rect.top?'above':'below';
 }
 
+function positionMenu(){positionPopup(menu,button)}
+
 function openMenu(){
   if(!menu)return;
   menu.hidden=false;button?.setAttribute('aria-expanded','true');positionMenu();
@@ -129,11 +140,12 @@ function openMenu(){
 
 function toggleMenu(){menu?.hidden?openMenu():closeMenu()}
 
-function install(){
-  const bar=(document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar'));
+function install(bar=document.querySelector('#skyFoundationFocus .sky-chart-filter-bar')||document.querySelector('#skyFoundationRelationships .sky-chart-filter-bar')){
   if(!bar)return;
-  const existing=bar.querySelector('[data-zodiac-filter]');
-  if(existing){root=existing;button=root.querySelector('[data-zodiac-summary]');return;}
+  if(root){
+    if(root.parentElement!==bar)bar.appendChild(root);
+    return;
+  }
 
   root=document.createElement('div');root.className='sky-chart-zodiac-filter';root.dataset.zodiacFilter='true';
   const label=document.createElement('span');label.className='sky-chart-zodiac-filter-label';label.textContent='Zodiac Signs';
@@ -150,12 +162,7 @@ function install(){
 
   SIGNS.forEach(([id,name,figure],index)=>{
     const row=document.createElement('label');row.className='sky-chart-zodiac-filter-row';row.dataset.signListItem=id;
-    const nameCell=document.createElement('span');nameCell.className='sky-chart-zodiac-filter-name';
-    const art=document.createElement('span');art.className='sky-chart-zodiac-filter-glyph';canonicalGlyph(art,id,COLORS[index]);
-    const copy=document.createElement('span');copy.className='sky-chart-zodiac-filter-copy';
-    const text=document.createElement('span');text.className='sky-chart-sign-list-label';text.textContent=name;
-    const figureText=document.createElement('span');figureText.className='sky-chart-sign-list-figure';figureText.textContent=figure;
-    copy.append(text,figureText);nameCell.append(art,copy);
+    const nameCell=signPresentation(index);
     const checkCell=document.createElement('span');checkCell.className='sky-chart-zodiac-filter-check';
     const input=document.createElement('input');input.type='checkbox';input.checked=true;input.value=String(index);input.setAttribute('aria-label',`${name}, ${figure}`);checkCell.appendChild(input);
     row.append(nameCell,checkCell);list.appendChild(row);
@@ -180,11 +187,50 @@ function install(){
   syncChecks();
 }
 
+// The existing Learn control owns selection; reuse the exact same sign presentation
+// and popup geometry as the zodiac filter, without a second Ascendant state.
+function createAscendantPicker(){
+  const trigger=document.createElement('button');trigger.type='button';trigger.id='skyLearnAscendantSelect';trigger.className='sky-learn-ascendant-select';
+  trigger.setAttribute('aria-haspopup','listbox');trigger.setAttribute('aria-expanded','false');trigger.setAttribute('aria-controls','skyLearnAscendantMenu');
+  const popup=document.createElement('div');popup.id='skyLearnAscendantMenu';popup.className='sky-chart-zodiac-filter-menu sky-learn-ascendant-menu';popup.hidden=true;popup.setAttribute('role','listbox');popup.setAttribute('aria-label','Ascendant sign');
+  const list=document.createElement('div');list.className='sky-chart-zodiac-filter-list';popup.appendChild(list);document.body.appendChild(popup);
+  const startup=()=>window.RelphiSkyStartupMode;
+  const options=SIGNS.map(([id,name,figure],index)=>{
+    const option=document.createElement('button');option.type='button';option.className='sky-chart-zodiac-filter-row sky-learn-ascendant-option';option.dataset.ascendantOption=String(index);option.setAttribute('role','option');option.setAttribute('aria-label',name+' · '+figure);option.setAttribute('aria-selected','false');option.append(signPresentation(index));
+    option.addEventListener('click',()=>{startup().setLearnAscendant(index);sync();close(true)});list.appendChild(option);return option;
+  });
+  function sync(){
+    const index=startup().readLearnAscendant(),[id,name,figure]=SIGNS[index];
+    if(trigger.dataset.selectedSign!==String(index)){
+      trigger.dataset.selectedSign=String(index);trigger.replaceChildren(signPresentation(index));
+      trigger.setAttribute('aria-label','Ascendant: '+name+', '+figure);
+    }
+    options.forEach((option,i)=>{option.setAttribute('aria-selected',String(i===index));option.tabIndex=i===index?0:-1});
+    if(startup().readMode()!=='learn')close();
+  }
+  function close(restore=false){if(popup.hidden)return;popup.hidden=true;trigger.setAttribute('aria-expanded','false');if(restore)trigger.focus({preventScroll:true})}
+  function reposition(){positionPopup(popup,trigger)}
+  function open(){sync();popup.hidden=false;trigger.setAttribute('aria-expanded','true');reposition();options[startup().readLearnAscendant()].focus({preventScroll:true})}
+  trigger.addEventListener('click',()=>popup.hidden?open():close());
+  trigger.addEventListener('keydown',event=>{if(['ArrowDown','ArrowUp'].includes(event.key)){event.preventDefault();open()}});
+  popup.addEventListener('keydown',event=>{
+    if(event.key==='Escape'){event.preventDefault();close(true);return}
+    if(event.key==='Tab'){close();return}
+    const current=options.indexOf(document.activeElement);
+    let next=event.key==='ArrowDown'?(current+1)%12:event.key==='ArrowUp'?(current+11)%12:event.key==='Home'?0:event.key==='End'?11:-1;
+    if(next>=0){event.preventDefault();options[next].focus();return}
+  });
+  document.addEventListener('pointerdown',event=>{if(!trigger.contains(event.target)&&!popup.contains(event.target))close()},true);
+  window.addEventListener('resize',reposition,{passive:true});window.addEventListener('scroll',reposition,{passive:true,capture:true});
+  sync();return {trigger,sync};
+}
+window.RelphiSkyZodiacFilter=Object.freeze({install,createAscendantPicker});
+
 // Wheel sign gestures belong to the foundation interaction controller.
 // This menu only owns explicitly changed Sign filter checkboxes.
 function start(){
   install();schedule();
-  ['relphi:sky-foundation-interactions-ready','relphi:sky-foundation-ready','relphi:sky-placement-multiselect-changed','relphi:sky-aspect-multiselect-changed'].forEach(name=>window.addEventListener(name,()=>{install();schedule()}));
+  ['relphi:sky-foundation-interactions-ready','relphi:sky-foundation-ready','relphi:sky-placement-multiselect-changed','relphi:sky-aspect-multiselect-changed','relphi:sky-experience-changed','relphi:sky-learn-ascendant-changed'].forEach(name=>window.addEventListener(name,()=>{install();schedule()}));
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();

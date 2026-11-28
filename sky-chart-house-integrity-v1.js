@@ -14,7 +14,7 @@
   const normalizedName=value=>String(value||'').toLowerCase().replace(/[._-]+/g,'').replace(/\s+/g,'');
 
   function read(slot){
-    try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}
+    try{return JSON.parse(window.RelphiSkyWorkingStorage.getItem(KEYS[slot])||'null')}
     catch(_){return null}
   }
 
@@ -165,12 +165,12 @@
       houseIntegrity:'recalculated-v2'
     };
 
-    localStorage.setItem(KEYS[slot],JSON.stringify(payload));
+    window.RelphiSkyWorkingStorage.setItem(KEYS[slot],JSON.stringify(payload));
     console.info(`[Sky Chart house integrity] Recalculated Sky ${slot} ${result.label||result.system} cusps from current angles.`);
 
     if(emit){
       try{
-        window.dispatchEvent(new StorageEvent('storage',{key:KEYS[slot],newValue:localStorage.getItem(KEYS[slot]),storageArea:localStorage}));
+        window.dispatchEvent(new StorageEvent('storage',{key:KEYS[slot],newValue:window.RelphiSkyWorkingStorage.getItem(KEYS[slot]),storageArea:localStorage}));
       }catch(_){
         const event=new Event('storage');
         Object.defineProperty(event,'key',{value:KEYS[slot]});

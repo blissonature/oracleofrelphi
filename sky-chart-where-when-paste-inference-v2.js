@@ -27,7 +27,7 @@ const norm=value=>((Number(value)%360)+360)%360;
 const signed=value=>{const n=norm(value);return n>180?n-360:n};
 const angularDistance=(a,b)=>Math.abs(((Number(a)-Number(b)+180)%360+360)%360-180);
 const keyName=value=>String(value||'').toLowerCase().replace(/\s+/g,'');
-const read=slot=>{try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}};
+const read=slot=>{try{return JSON.parse(window.RelphiSkyWorkingStorage.getItem(KEYS[slot])||'null')}catch(_){return null}};
 
 function installStyle(){
   if(document.getElementById('skyWhereWhenPasteInferenceV2Styles'))return;
@@ -168,7 +168,7 @@ function buildPastedPayload(slot,form,state){
   const dt=window.luxon?.DateTime?.fromISO(`${date}T${time}`,{zone:timezone,setZone:true});if(!dt?.isValid)throw new Error('The local time is not valid.');
   const packet=state.packet||packetFromForm(form);if(!packet?.canonical)throw new Error('Choose a locality or infer it from coordinates before confirming.');
   const placements=JSON.parse(JSON.stringify(state.parsed.placements));if(placements.Ascendant&&!placements.Descendant)placements.Descendant=placementObject('Descendant',placements.Ascendant.longitude+180);if(placements.Midheaven&&!placements.IC)placements.IC=placementObject('IC',placements.Midheaven.longitude+180);
-  const system=localStorage.getItem(SHARED_HOUSE_KEY)||existing.calcProfile?.houseSystem||'whole-sign',asc=placements.Ascendant?.longitude,mc=placements.Midheaven?.longitude;let houses=null;
+  const system=window.RelphiSkyWorkingStorage.getItem(SHARED_HOUSE_KEY)||existing.calcProfile?.houseSystem||'whole-sign',asc=placements.Ascendant?.longitude,mc=placements.Midheaven?.longitude;let houses=null;
   if(Number.isFinite(asc)&&Number.isFinite(mc)&&window.RelphiHouseSystems&&window.Astronomy){houses=window.RelphiHouseSystems.calculateCusps({system,ascendant:asc,midheaven:mc,siderealDegrees:siderealDegrees(dt.toUTC().toJSDate(),longitude),obliquityDegrees:obliquity(dt.toUTC().toJSDate()),latitude});if(Array.isArray(houses?.cusps)&&houses.cusps.length===12)Object.values(placements).forEach(item=>{if(Number.isFinite(Number(item?.longitude)))item.house=houseFor(item.longitude,houses.cusps)})}
   const metadata=existing.metadata&&typeof existing.metadata==='object'?{...existing.metadata}:{};delete metadata.savedSkyId;delete metadata.savedSkyName;delete metadata.savedSkyLoadedAt;delete metadata.liveNowOrigin;delete metadata.liveNowAt;delete metadata.liveAgeAnchorAt;delete metadata.liveNowLatitude;delete metadata.liveNowLongitude;metadata.liveNowDisabled=true;metadata.liveNowDisabledReason='pasted-placements';metadata.placementSource='astroseek-paste';metadata.whereWhenSource=state.whereWhenSource||packet.source||'manual';
   const profile=existing.calcProfile&&typeof existing.calcProfile==='object'?{...existing.calcProfile}:{};delete profile.liveNowOrigin;delete profile.liveNowAt;
@@ -183,7 +183,7 @@ async function commit(form){
   let state=form.__relphiPasteImport;if(!state||state.raw!==raw){state={raw,parsed,packet:packetFromForm(form),whereWhenSource:'manual',inferredFromPlacements:false,confidence:null};form.__relphiPasteImport=state}else state.parsed=parsed;
   const slot=form.dataset.slot,submit=form.querySelector('button[type="submit"]');if(submit){submit.disabled=true;submit.textContent='Saving…'}
   try{
-    const next=buildPastedPayload(slot,form,state);localStorage.setItem(KEYS[slot],JSON.stringify(next));const saved=read(slot);if(!saved?.calcProfile?.dateTime||!saved?.placements?.Sun)throw new Error('The pasted sky did not persist.');
+    const next=buildPastedPayload(slot,form,state);window.RelphiSkyWorkingStorage.setItem(KEYS[slot],JSON.stringify(next));const saved=read(slot);if(!saved?.calcProfile?.dateTime||!saved?.placements?.Sun)throw new Error('The pasted sky did not persist.');
     if(!window.RelphiSkyWhereWhen?.finishExternalCommit)throw new Error('Where and When commit service is unavailable.');
     window.RelphiSkyWhereWhen.finishExternalCommit(slot,{source:state.inferredFromPlacements?'astroseek-paste-inference':'astroseek-paste',dateTime:saved.calcProfile.dateTime,location:saved.calcProfile.location});
   }catch(error){setPasteStatus(form,error.message||'The pasted sky could not be saved.',true);if(submit?.isConnected){submit.disabled=false;submit.textContent='Use This Where and When'}}

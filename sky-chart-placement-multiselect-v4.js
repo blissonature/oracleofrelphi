@@ -47,12 +47,12 @@
   function ruleKey(scope,target,choice){return [scope,target,choice].join('|')}
   function loadLogic(){
     try{
-      const raw=JSON.parse(localStorage.getItem(LOGIC_KEY)||'{}');
+      const raw=JSON.parse(window.RelphiSkyWorkingStorage.getItem(LOGIC_KEY)||'{}');
       Object.entries(raw||{}).forEach(([key,value])=>{if(LOGIC_STATES.includes(value)&&value)logicRules.set(key,value)});
     }catch(_){}
   }
   function saveLogic(){
-    try{localStorage.setItem(LOGIC_KEY,JSON.stringify(Object.fromEntries(logicRules)))}catch(_){}
+    try{window.RelphiSkyWorkingStorage.setItem(LOGIC_KEY,JSON.stringify(Object.fromEntries(logicRules)))}catch(_){}
   }
   loadLogic();
 
@@ -96,7 +96,7 @@
   function popover(){return document.getElementById('skyChartPlacementPopover')}
   function isOpen(owner){return !!owner?.classList.contains('is-open')}
 
-  function readPayload(slot){try{return JSON.parse(localStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
+  function readPayload(slot){try{return JSON.parse(window.RelphiSkyWorkingStorage.getItem(KEYS[slot])||'null')}catch(_){return null}}
   function placementSource(payload){
     if(!payload||typeof payload!=='object')return[];
     const known=[payload.placements,payload.positions,payload.points,payload.bodies].find(value=>value&&typeof value==='object');
@@ -312,6 +312,7 @@
   }
   function ruleMatchesRow(rule,row){return rowEndpoints(row).some(endpoint=>ruleMatchesEndpoint(rule,endpoint))}
   function relationshipMatches(row){
+    if(window.RelphiSkyStartupMode?.readMode?.()==='learn'&&row?.dataset?.learnRelationship==='true')return true;
     const rules=activeRules();
     if(!rules.length)return true;
     const notRules=rules.filter(rule=>rule.op==='not');
@@ -460,6 +461,11 @@
   function ensure(){
     const bar=filterBar();
     if(!bar)return false;
+    if(window.RelphiSkyStartupMode?.readMode?.()==='learn'){
+      const owner=bar.querySelector('[data-placement-filter="combined"]');
+      if(owner){close(owner);owner.remove();}
+      return false;
+    }
     removeLegacyControls(bar);
     let owner=bar.querySelector('[data-placement-filter="combined"]');
     if(!owner)owner=createControl();
@@ -477,7 +483,8 @@
   function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
   function refresh(){
     refreshQueued=false;
-    if(whereWhenEditing()||!ensure())return;
+    if(whereWhenEditing()&&window.RelphiSkyStartupMode?.readMode?.()!=='learn')return;
+    if(!ensure())return;
     const scopeSignature=bActive()?'A+B':'A',scopeChanged=scopeSignature!==lastScopeSignature;
     lastScopeSignature=scopeSignature;
 

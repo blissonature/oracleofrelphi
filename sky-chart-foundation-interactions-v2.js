@@ -24,18 +24,14 @@
   const norm=value=>((Number(value)%360)+360)%360;
   const separation=(a,b)=>Math.abs(((a-b+180)%360+360)%360-180);
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
-  function read(key){try{return JSON.parse(localStorage.getItem(key)||'null')}catch(_){return null}}
+  function read(key){try{return JSON.parse(window.RelphiSkyWorkingStorage.getItem(key)||'null')}catch(_){return null}}
   function source(payload){
     if(!payload||typeof payload!=='object')return[];
     const known=[payload.placements,payload.positions,payload.points,payload.bodies].find(value=>value&&typeof value==='object'),value=known||payload;
     if(Array.isArray(value))return value.map((item,index)=>[String(item?.name||item?.label||item?.id||index),item]);
     return Object.entries(value).filter(([key,item])=>item&&typeof item==='object'&&!Array.isArray(item)&&!/^(calcProfile|metadata|profile|location|notes|houseCusps|cusps|houses)$/i.test(key)&&(Number.isFinite(Number(item.longitude))||item.sign||item.zodiac));
   }
-  function longitude(item){
-    if(Number.isFinite(Number(item?.longitude)))return norm(item.longitude);
-    const sign=SIGNS.indexOf(String(item?.sign||item?.zodiac||'').trim().toLowerCase());
-    return sign<0?NaN:norm(sign*30+Number(item.degree||item.degrees||0)+Number(item.minute||item.minutes||0)/60+Number(item.second||item.seconds||0)/3600);
-  }
+  function longitude(item){return window.RelphiSkyCoordinatePrecision.longitude(item)}
   function canonical(key,item){
     const registry=window.RelphiGlyphRegistry;if(!registry)return null;
     for(const candidate of [item?.glyphId,item?.id,item?.name,item?.label,item?.body,item?.planet,item?.point,key]){
@@ -82,6 +78,90 @@
     }
     return result.sort((a,b)=>a.phaseError-b.phaseError||a.harmonicOrder-b.harmonicOrder||a.orb-b.orb);
   }
+  function learnAsc(){return window.RelphiSkyStartupMode?.readLearnAscendant?.()||0}
+  function learnSignContext(index){
+    if(!Number.isInteger(index)||index<0||index>11)return null;
+    const name=SIGN_NAMES[index],house=(index-learnAsc()+12)%12+1,source=window.RELPHI_RISING_SIGN_HOUSE_OFFSET_EFFECTS;
+    const entry=source?.entries?.find(item=>item.sign===name&&Number(item.houseNumber)===house);
+    const ingredients=source?.signIngredients?.[name];if(!entry||!ingredients)return null;
+    const tarot=(window.RELPHI_TAROT_CARDS||[]).find(item=>item.arcana==='Major'&&String(item.astrology?.sign||'').split(',').map(x=>x.trim()).includes(name));
+    return {index,name,house,ruler:ingredients.ruler,modality:ingredients.modality,element:ingredients.element,polarity:['fire','air'].includes(ingredients.element)?'masculine':'feminine',structure:ingredients.structure||ingredients.modality+' '+ingredients.element,field:entry.ingredients.houseField,description:entry.description,card:tarot?{id:tarot.card_id,title:tarot.name,image:'assets/tarot/rws-export/'+tarot.card_id+'.webp'}:null};
+  }
+  function learnSignForState(state){
+    if(!state)return null;
+    if(state.kind==='sign')return Number(state.value);
+    if(state.kind==='house')return (learnAsc()+Number(state.value)-1)%12;
+    if(state.kind==='aspect'){const rel=current.relations.find(r=>r.learn&&('A:'+r.left.id+'|'+r.aspect.id+'|B:'+r.right.id)===state.value);if(rel)return [rel.left.sign,rel.right.sign].includes(state.learnAnchor)?state.learnAnchor:rel.left.sign}
+    return null;
+  }
+  function learnPairContext(left,right){
+    const a=learnSignContext(left),b=learnSignContext(right);if(!a||!b)return null;
+    const selected=learnSignForState(lockedState),first=selected===right?b:a,second=first===a?b:a;
+    const planet=c=>['Sun','Moon'].includes(c.ruler)?'the '+c.ruler:c.ruler;
+    const field=c=>c.house===12?'hidden things':c.house===9?'belief, travel, study, and law':c.field;
+    const sentence="While "+planet(first)+"'s affairs of "+first.structure+" concern "+field(first)+", "+planet(second)+" in "+second.structure+" has jurisdiction over "+field(second)+".";
+    return {left:a,right:b,sentence,modality:a.modality===b.modality?'Same':'Different',polarity:a.polarity===b.polarity?'Same':'Different',element:a.element===b.element?'Same':'Different',adjacent:[1,11].includes(Math.abs(left-right))?'Yes':'No'};
+  }
+  function updateLearnCore(state){
+    const mount=document.getElementById('skyFoundationWheelMount');if(!mount)return;
+    let core=document.getElementById('skyFoundationLearnCore');
+    const active=window.RelphiSkyStartupMode?.readMode?.()==='learn';
+    if(!active)return;
+    if(!core){
+      core=document.createElement('section');core.id='skyFoundationLearnCore';core.className='sky-foundation-panel';core.setAttribute('aria-label','Sky Card Core');
+      core.innerHTML='<header class="sky-core-heading"><h2>Sky Card Core</h2><button type="button" class="sky-card-hits-structure-tab sky-core-sound" data-core-sound aria-label="Sky Card Core sound" aria-pressed="false" title="Enable geometry-derived tones">Sound off</button></header><div class="sky-card-hits-structure-tabs sky-core-tabs" role="tablist" aria-label="Core views"><button type="button" class="sky-card-hits-structure-tab" data-core-tab="houses" role="tab" aria-selected="true">Houses</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="signs" role="tab" aria-selected="false">Signs</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="rulers" role="tab" aria-selected="false">Rulers</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="vocab" role="tab" aria-selected="false">Vocab</button></div><div data-core-structure class="sky-card-hits-structure"></div><div data-core-prompt>Select a sign or house on the wheel to explore its twelve house manifestations.</div><div data-core-content hidden><div class="sky-learn-core-identity"><div><h3 data-core-title></h3><p data-core-qualities></p><p data-core-description></p></div><a data-core-card><img alt=""><span></span></a></div></div>';
+      mount.after(core);
+    }
+    const tab=core.dataset.coreActiveTab||'houses',asc=learnAsc(),ruler=state?.kind==='ruler'?state.value:'';
+    const structure=core.querySelector('[data-core-structure]'),structureKey=[tab,asc,ruler].join('|');
+    const detail=core.querySelector('[data-core-content]'),prompt=core.querySelector('[data-core-prompt]');
+    if(structure.dataset.structureKey!==structureKey){
+      if(structure.contains(detail))structure.after(detail);
+      structure.dataset.structureKey=structureKey;
+      core.querySelectorAll('button[data-core-tab]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.coreTab===tab)));
+      if(tab==='vocab')window.RelphiSkyVocab?.renderTemplate?.(structure,asc);
+      else window.RelphiSkyCardHitsStructure?.renderTemplate?.(structure,asc,ruler,tab);
+    }
+    const index=learnSignForState(state),ctx=Number.isInteger(index)?learnSignContext(index):null;
+    structure.querySelectorAll('[data-core-select-sign]').forEach(tile=>{const selected=Number(tile.dataset.coreSelectSign)===index;tile.classList.toggle('is-selected',selected);tile.setAttribute('aria-pressed',String(selected))});
+    const selectedTile=(tab==='houses'||tab==='signs')&&ctx?structure.querySelector('[data-core-select-sign="'+index+'"]'):null;
+    if(selectedTile){
+      if(selectedTile.nextElementSibling!==detail)selectedTile.after(detail);
+    }else if(structure.contains(detail))structure.after(detail);
+    structure.querySelectorAll('[data-core-select-sign]').forEach(tile=>tile.setAttribute('aria-expanded',String(tile===selectedTile)));
+    prompt.hidden=!!ctx;detail.hidden=!ctx;
+    if(!ctx){delete core.dataset.coreSign;delete core.dataset.coreHouse;return}
+    if(core.dataset.coreSign===String(index)&&core.dataset.coreHouse===String(ctx.house))return;
+    core.dataset.coreSign=String(index);core.dataset.coreHouse=String(ctx.house);
+    const title=core.querySelector('[data-core-title]'),shared=window.RelphiSkyCardHitsStructure;
+    title.innerHTML=(shared?.glyphHost(SIGN_NAMES[index].toLowerCase()).outerHTML||'')+' '+ctx.name+' in House '+(shared?.houseMedallionMarkup(ctx.house)||ctx.house);
+    shared?.hydrateHouseGlyphs(title);shared?.hydrateHouseMedallions(title);
+    core.querySelector('[data-core-qualities]').textContent=ctx.ruler+' · '+ctx.structure+' · '+ctx.polarity;
+    core.querySelector('[data-core-description]').textContent=ctx.description;
+    const link=core.querySelector('[data-core-card]');link.hidden=!ctx.card;
+    if(ctx.card){link.dataset.inlineLedger=ctx.card.id;link.href='tarot.html?card='+encodeURIComponent(ctx.card.id);link.querySelector('img').src=ctx.card.image;link.querySelector('img').alt=ctx.card.title;link.querySelector('span').textContent=ctx.card.title}
+  }
+  function templateRelationships(){
+    const aspectsByStep=['','semi-sextile','sextile','square','trine','quincunx','opposition'];
+    const aspectById=new Map(ASPECTS.map(aspect=>[aspect.id,aspect]));
+    const registry=window.RelphiGlyphRegistry;
+    const signs=SIGN_NAMES.map((name,index)=>{
+      const entry=registry?.resolve?.(name)||registry?.get?.(name.toLowerCase())||{id:name.toLowerCase(),name};
+      return{id:name.toLowerCase(),entry:{...entry,name},value:index*30+15,sign:index,sky:'A',house:(index-learnAsc()+12)%12+1};
+    });
+    const relations=[];
+    for(let i=0;i<12;i++)for(let j=i+1;j<12;j++){
+      const steps=Math.min(j-i,12-(j-i)),aspect=aspectById.get(aspectsByStep[steps]);
+      if(!aspect)continue;
+      const left=signs[i],right={...signs[j],sky:'B'};
+      const angle=steps*30;
+      const harmonicOrder=aspect.harmonic||12;
+      relations.push({left,right,aspect,distance:angle,orb:0,bySignOnly:true,learn:true,
+        harmonicOrder,harmonicNumerator:1,phaseError:0,signedPhaseError:0,
+        masterWindow:12,windowFraction:0,coherence:1,coherencePercent:100});
+    }
+    return relations;
+  }
   function relationshipSignature(relations){
     return relations.map(relation=>[
       relation.left.id,relation.aspect.id,relation.right.id,relation.orb.toFixed(6),
@@ -93,17 +173,23 @@
   }
   function relationshipRowsIntact(relations){
     const list=document.getElementById('skyFoundationRelationshipList');if(!list)return false;
-    const rows=Array.from(list.children).filter(node=>node.classList?.contains('sky-foundation-relationship-row')&&String(node.dataset.relationshipMode||'A-B').toUpperCase()==='A-B');
+    const rows=[...list.children].filter(node=>node.classList?.contains('sky-foundation-relationship-row')&&
+      String(node.dataset.relationshipMode||'A-B').toUpperCase()==='A-B');
     if(rows.length!==relations.length)return false;
-    return rows.every((row,index)=>{
-      const relation=relations[index];
-      return row.dataset.leftPlacement===relation.left.id&&row.dataset.aspect===relation.aspect.id&&row.dataset.rightPlacement===relation.right.id&&Number(row.dataset.sourceOrb).toFixed(6)===relation.orb.toFixed(6)&&Number(row.dataset.leftHouse)===relation.left.house&&Number(row.dataset.rightHouse)===relation.right.house;
+    const asc=Number(document.documentElement.dataset.skyLearnAscendant||0);
+    const identity=(left,aspect,right)=>left+'|'+aspect+'|'+right;
+    const byIdentity=new Map(rows.map(row=>[identity(row.dataset.leftPlacement,row.dataset.aspect,row.dataset.rightPlacement),row]));
+    if(byIdentity.size!==rows.length)return false;
+    return relations.every(relation=>{
+      const row=byIdentity.get(identity(relation.left.id,relation.aspect.id,relation.right.id));
+      if(!row||Number(row.dataset.sourceOrb).toFixed(6)!==relation.orb.toFixed(6))return false;
+      const houseLeft=relation.learn?(relation.left.sign-asc+12)%12+1:relation.left.house;
+      const houseRight=relation.learn?(relation.right.sign-asc+12)%12+1:relation.right.house;
+      return (row.dataset.leftHouse==null?null:Number(row.dataset.leftHouse))===houseLeft&&
+        (row.dataset.rightHouse==null?null:Number(row.dataset.rightHouse))===houseRight;
     });
   }
-  function coordinate(record){
-    const value=norm(record.value),sign=Math.floor(value/30),within=value-sign*30,degree=Math.floor(within),minute=Math.floor((within-degree)*60+1e-9);
-    return{sign,text:`${degree}°${String(minute).padStart(2,'0')}′`};
-  }
+    function coordinate(record){const p=window.RelphiSkyCoordinatePrecision.format(record.value);return{sign:p.signIndex,text:p.text}}
 
   function ensurePanel(){
     let panel=document.getElementById('skyFoundationRelationships');if(panel)return panel;
@@ -125,18 +211,22 @@
   async function renderRows(relations){
     const list=document.getElementById('skyFoundationRelationshipList'),count=document.getElementById('skyFoundationRelationshipCount');if(!list||!count)return;
     const selectionCleared=document.getElementById('skyFoundationRoot')?.dataset.relationshipSelectionCleared==='true',selected=selectionCleared?null:document.querySelector('.sky-foundation-relationship-row[aria-current="true"]');const selectedKey=selected?[selected.dataset.leftPlacement,selected.dataset.aspect,selected.dataset.rightPlacement,selected.getAttribute('aria-label')].join('|'):'';
+    const expanded=window.RelphiInlineRelationship?.selected?.();const expandedKey=expanded?.dataset.learnRelationship==='true'?relationshipIdentity(expanded):'';
     list.replaceChildren();count.textContent=relations.length+'/'+relations.length;count.dataset.total=String(relations.length);
     relations.forEach((relation,index)=>{
-      const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.relationshipMode='A-B';row.dataset.relationScope='inter';row.dataset.leftSky='A';row.dataset.rightSky='B';row.dataset.aspect=relation.aspect.id;if(relation.bySignOnly)row.dataset.bySignOnly='true';row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.harmonicOrder=String(relation.harmonicOrder);row.dataset.harmonicNumerator=String(relation.harmonicNumerator);row.dataset.phaseError=relation.phaseError.toFixed(6);row.dataset.signedPhaseError=relation.signedPhaseError.toFixed(6);row.dataset.harmonicWindow=relation.masterWindow.toFixed(6);row.dataset.windowFraction=Number.isFinite(relation.windowFraction)?relation.windowFraction.toFixed(6):String(relation.windowFraction);row.dataset.harmonicCoherence=relation.coherence.toFixed(8);if(relation.left.house!=null)row.dataset.leftHouse=String(relation.left.house);if(relation.right.house!=null)row.dataset.rightHouse=String(relation.right.house);row.dataset.leftSign=String(left.sign);row.dataset.rightSign=String(right.sign);row.setAttribute('aria-label',relation.left.entry.name+' '+relation.aspect.id+' '+relation.right.entry.name+(relation.bySignOnly?', by sign':', orb '+relation.orb.toFixed(2)+' degrees, harmonic '+relation.harmonicOrder+', phase error '+relation.phaseError.toFixed(2)+' degrees, coherence '+relation.coherencePercent.toFixed(0)+' percent'));
+      const left=coordinate(relation.left),right=coordinate(relation.right),row=document.createElement('button');
+      const ascIndex=Number(document.documentElement.dataset.skyLearnAscendant||0);
+      const learnHouses=relation.learn?{left:(relation.left.sign-ascIndex+12)%12+1,right:(relation.right.sign-ascIndex+12)%12+1}:null;row.type='button';row.className='sky-foundation-relationship-row';row.dataset.relationshipSelection='true';row.dataset.relationIndex=String(index);row.dataset.relationshipMode='A-B';row.dataset.relationScope='inter';row.dataset.leftSky='A';row.dataset.rightSky='B';row.dataset.aspect=relation.aspect.id;if(relation.learn)row.dataset.learnRelationship='true';if(relation.bySignOnly)row.dataset.bySignOnly='true';row.dataset.leftPlacement=relation.left.id;row.dataset.rightPlacement=relation.right.id;row.dataset.sourceOrb=relation.orb.toFixed(6);row.dataset.harmonicOrder=String(relation.harmonicOrder);row.dataset.harmonicNumerator=String(relation.harmonicNumerator);row.dataset.phaseError=relation.phaseError.toFixed(6);row.dataset.signedPhaseError=relation.signedPhaseError.toFixed(6);row.dataset.harmonicWindow=relation.masterWindow.toFixed(6);row.dataset.windowFraction=Number.isFinite(relation.windowFraction)?relation.windowFraction.toFixed(6):String(relation.windowFraction);row.dataset.harmonicCoherence=relation.coherence.toFixed(8);if(relation.learn){row.dataset.leftHouse=String(learnHouses.left);row.dataset.rightHouse=String(learnHouses.right);}else{if(relation.left.house!=null)row.dataset.leftHouse=String(relation.left.house);if(relation.right.house!=null)row.dataset.rightHouse=String(relation.right.house);}row.dataset.leftSign=String(left.sign);row.dataset.rightSign=String(right.sign);row.setAttribute('aria-label',relation.learn?relation.left.entry.name+' '+relation.aspect.id+' '+relation.right.entry.name:relation.left.entry.name+' '+relation.aspect.id+' '+relation.right.entry.name+(relation.bySignOnly?', by sign':', orb '+relation.orb.toFixed(2)+' degrees, harmonic '+relation.harmonicOrder+', phase error '+relation.phaseError.toFixed(2)+' degrees, coherence '+relation.coherencePercent.toFixed(0)+' percent'));
       const leftGlyph=glyphSlot('left',relation.left.entry.name),aspectGlyph=glyphSlot('aspect',relation.aspect.id),rightGlyph=glyphSlot('right',relation.right.entry.name),leftCopy=document.createElement('span'),rightCopy=document.createElement('span'),leftMeta=document.createElement('small'),rightMeta=document.createElement('small');
       leftCopy.className=rightCopy.className='sky-foundation-relationship-copy';
       leftCopy.append(document.createTextNode(relation.left.entry.name),leftMeta);rightCopy.append(document.createTextNode(relation.right.entry.name),rightMeta);
-      if(relation.left.house!=null)sourceHouseCoordinate(leftMeta,left.text,relation.left.house,'left-house');else leftMeta.textContent=left.text;if(relation.right.house!=null)sourceHouseCoordinate(rightMeta,right.text,relation.right.house,'right-house');else rightMeta.textContent=right.text;
+      if(relation.learn){sourceHouseCoordinate(leftMeta,'House',learnHouses.left,'left-house');sourceHouseCoordinate(rightMeta,'House',learnHouses.right,'right-house')}else{if(relation.left.house!=null)sourceHouseCoordinate(leftMeta,left.text,relation.left.house,'left-house');else leftMeta.textContent=left.text;if(relation.right.house!=null)sourceHouseCoordinate(rightMeta,right.text,relation.right.house,'right-house');else rightMeta.textContent=right.text;}
       row.append(leftGlyph,leftCopy,aspectGlyph,rightGlyph,rightCopy);list.appendChild(row);
       const key=[row.dataset.leftPlacement,row.dataset.aspect,row.dataset.rightPlacement,row.getAttribute('aria-label')].join('|');if(key===selectedKey)row.setAttribute('aria-current','true');
     });
+    if(expandedKey){const replacement=[...list.querySelectorAll('[data-learn-relationship="true"]')].find(row=>relationshipIdentity(row)===expandedKey);if(replacement)window.RelphiInlineRelationship?.expand?.(replacement)}
   }
-  function annotateHouseLayer(layerName,slot){const layer=document.querySelector(`[data-layer="${layerName}"]`);if(!layer)return;Array.from(layer.children).filter(node=>node.tagName?.toLowerCase()==='path').forEach((node,index)=>{node.classList.add('sky-foundation-interactive','sky-foundation-house-sector');Object.assign(node.dataset,{interactive:'house',focusPiece:'house',sky:slot,house:String(index+1)});node.setAttribute('tabindex','0');node.setAttribute('role','button');node.setAttribute('aria-label',`Sky ${slot} house ${index+1}`)})}
+  function annotateHouseLayer(layerName,slot){const layer=document.querySelector(`[data-layer="${layerName}"]`);if(!layer)return;Array.from(layer.children).filter(node=>node.tagName?.toLowerCase()==='path').forEach((node,index)=>{node.classList.add('sky-foundation-interactive','sky-foundation-house-sector');Object.assign(node.dataset,{interactive:'house',focusPiece:'house',sky:slot,house:String(index+1)});node.setAttribute('tabindex','0');node.setAttribute('role','button');node.setAttribute('aria-label',window.RelphiSkyStartupMode?.readMode?.()==='learn'?`House ${index+1}`:`Sky ${slot} house ${index+1}`)})}
   function annotateSigns(){const layer=document.querySelector('[data-layer="zodiac"]');if(!layer)return;const paths=Array.from(layer.children).filter(node=>node.tagName?.toLowerCase()==='path'),glyphs=Array.from(layer.children).filter(node=>node.tagName?.toLowerCase()==='g');paths.forEach((node,index)=>{node.classList.add('sky-foundation-interactive','sky-foundation-sign-sector');Object.assign(node.dataset,{interactive:'sign',focusPiece:'sign',sign:String(index)});node.setAttribute('tabindex','0');node.setAttribute('role','button');node.setAttribute('aria-label',SIGN_NAMES[index])});glyphs.forEach((node,index)=>{node.classList.add('sky-foundation-sign-glyph');Object.assign(node.dataset,{focusPiece:'sign',sign:String(index)});node.style.pointerEvents='none'})}
   function annotatePlacements(listA,listB){
     const maps={A:new Map(listA.map(record=>[record.id,record])),B:new Map(listB.map(record=>[record.id,record]))},nodes=Array.from(document.querySelectorAll('[data-layer="placements"] > g[data-sky][data-placement]')),leaders=Array.from(document.querySelectorAll('[data-layer="leaders"] > line'));
@@ -149,14 +239,14 @@
       const mode=String(line.dataset.relationshipMode||'').toUpperCase();
       if(mode==='A-A'||mode==='B-B'){
         line.classList.add('sky-foundation-interactive','sky-foundation-aspect');
-        line.dataset.interactive='aspect';line.dataset.focusPiece='aspect';line.style.pointerEvents='stroke';
+        line.dataset.interactive='aspect';line.dataset.focusPiece='aspect';line.style.removeProperty('pointer-events');
         return;
       }
       const index=indexes.get(relationKey(line.dataset.leftPlacement,line.dataset.aspect,line.dataset.rightPlacement,line.dataset.orb)),relation=relations[index];
       if(!relation){delete line.dataset.relationIndex;return}
       line.classList.add('sky-foundation-interactive','sky-foundation-aspect');
       Object.assign(line.dataset,{interactive:'aspect',focusPiece:'aspect',relationIndex:String(index),relationshipMode:'A-B',leftSky:'A',rightSky:'B',aspect:relation.aspect.id,leftPlacement:relation.left.id,rightPlacement:relation.right.id,leftHouse:relation.left.house==null?'':String(relation.left.house),rightHouse:relation.right.house==null?'':String(relation.right.house),leftSign:String(relation.left.sign),rightSign:String(relation.right.sign),harmonicOrder:String(relation.harmonicOrder),harmonicNumerator:String(relation.harmonicNumerator),phaseError:relation.phaseError.toFixed(6),harmonicCoherence:relation.coherence.toFixed(8)});
-      line.setAttribute('tabindex','0');line.setAttribute('role','button');line.setAttribute('aria-label',`Sky A ${relation.left.entry.name} ${relation.aspect.id} Sky B ${relation.right.entry.name}, harmonic ${relation.harmonicOrder}, phase error ${relation.phaseError.toFixed(2)} degrees`);line.style.pointerEvents='stroke'
+      line.setAttribute('tabindex','0');line.setAttribute('role','button');line.setAttribute('aria-label',relation.learn?`${relation.left.entry.name} ${relation.aspect.id} ${relation.right.entry.name}, by sign`:`Sky A ${relation.left.entry.name} ${relation.aspect.id} Sky B ${relation.right.entry.name}, harmonic ${relation.harmonicOrder}, phase error ${relation.phaseError.toFixed(2)} degrees`);line.style.removeProperty('pointer-events')
     })
   }
   function ledgerRecord(row,list){
@@ -200,6 +290,7 @@
     return String(spec.value||'');
   }
   function selectionSource(node){
+    if(node?.closest?.('#skyFoundationLearnCore'))return'Sky Card Core';
     if(node?.closest?.('.sky-foundation-row[data-placement]'))return'Placements';
     if(node?.closest?.('#skyFoundationWheelMount'))return'Zodiac Wheel';
     if(node?.closest?.('[data-sky-vocab-panel]'))return'Vocab';
@@ -253,7 +344,13 @@
     if(!state)return true;
     const slots=rowSlots(row);
     if(state.kind==='aspect')return relationshipIdentity(row)===String(state.value);
+    if(state.kind==='ruler'){const signs=window.RelphiSkyCardHitsStructure?.templateRulerSigns(state.value)||[];return signs.includes(Number(row.dataset.leftSign))||signs.includes(Number(row.dataset.rightSign))}
     if(state.kind==='sign')return Number(row.dataset.leftSign)===state.value||Number(row.dataset.rightSign)===state.value;
+    if(state.kind==='house'&&window.RelphiSkyStartupMode?.readMode?.()==='learn'){
+      const asc=Number(document.documentElement.dataset.skyLearnAscendant||0);
+      const sign=(asc+Number(state.value)-1)%12;
+      return Number(row.dataset.leftSign)===sign||Number(row.dataset.rightSign)===sign;
+    }
     if(state.kind==='house')return (slots.left===state.sky&&Number(row.dataset.leftHouse)===state.value)||
       (slots.right===state.sky&&Number(row.dataset.rightHouse)===state.value)||
       !!houseKeys?.has(`${slots.left}:${row.dataset.leftPlacement}`)||
@@ -319,6 +416,7 @@
         const left=String(line.dataset.leftPlacement||''),right=String(line.dataset.rightPlacement||'');
         if(!left||!right||!identity)return;
         const matches=state.kind==='aspect'?identity===String(state.value):
+          state.kind==='house'&&window.RelphiSkyStartupMode?.readMode?.()==='learn'?(()=>{const sign=(Number(document.documentElement.dataset.skyLearnAscendant||0)+Number(state.value)-1)%12;return Number(line.dataset.leftSign)===sign||Number(line.dataset.rightSign)===sign})():
           state.kind==='house'?((slots.left===state.sky&&Number(line.dataset.leftHouse)===state.value)||
             (slots.right===state.sky&&Number(line.dataset.rightHouse)===state.value)||
             houseKeys.has(`${slots.left}:${left}`)||houseKeys.has(`${slots.right}:${right}`)):
@@ -333,6 +431,11 @@
           if(sign!==undefined&&sign!=='')signs.add(Number(sign));
         }
       });
+    }
+    if(window.RelphiSkyStartupMode?.readMode?.()==='learn'){
+      if(state?.kind==='ruler'){signs.clear();(window.RelphiSkyCardHitsStructure?.templateRulerSigns(state.value)||[]).forEach(sign=>signs.add(sign));}
+      houses.clear();
+      signs.forEach(sign=>housesForSign(current.cuspsA,sign).forEach(house=>houses.add(`A:${house}`)));
     }
     return{matched,relationships,placements,houses,signs,houseKeys};
   }
@@ -374,6 +477,7 @@
       return key===`${state.left.sky}:${state.left.id}`||key===`${state.right.sky}:${state.right.id}`;
     }
     if(type==='house'){
+      if(window.RelphiSkyStartupMode?.readMode?.()==='learn')return [state.left.house,state.right.house].includes(Number(node.dataset.house));
       const key=`${node.dataset.sky}:${Number(node.dataset.house)}`;
       return (Number.isFinite(state.left.house)&&key===`${state.left.sky}:${state.left.house}`)||(Number.isFinite(state.right.house)&&key===`${state.right.sky}:${state.right.house}`);
     }
@@ -385,17 +489,24 @@
   }
   function rowMarksNode(node,state){return node.dataset.focusPiece==='aspect'&&rowLineMatches(node,state)}
   function applyState(){
-    const focusState=lockedState||(!rowLockedState&&hoverState),aspectFocus=focusState?.kind==='aspect',filterState=aspectFocus?null:focusState,filterKeep=keepSets(focusState),rowState=rowLockedState||rowHoverState,wheelState=focusState||rowState,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
+    const rulerPreview=hoverState?.kind==='ruler'?hoverState:null;
+    const focusState=lockedState||(!rowLockedState&&!rulerPreview&&hoverState),aspectFocus=focusState?.kind==='aspect',filterState=aspectFocus?null:focusState,filterKeep=keepSets(focusState),rowState=rowLockedState||rowHoverState,wheelFocus=rulerPreview||focusState,wheelKeep=rulerPreview?keepSets(rulerPreview):filterKeep,wheelState=wheelFocus||rowState,wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');
     if(wheel){
       wheel.classList.toggle('has-isolation',!!wheelState);
+      wheel.classList.toggle('has-locked-isolation',!!(lockedState||rowLockedState));
       wheel.querySelectorAll('[data-focus-piece]').forEach(node=>{
-        const isRowDriven=!focusState&&!!rowState,isKept=!!wheelState&&(isRowDriven?rowKeeps(node,rowState):kept(node,filterKeep)||!!focusState&&focusState.kind==='aspect'&&matchesNode(node,focusState)),type=node.dataset.focusPiece;
+        const isRowDriven=!wheelFocus&&!!rowState,isKept=!!wheelState&&(isRowDriven?rowKeeps(node,rowState):kept(node,wheelKeep)||!!wheelFocus&&wheelFocus.kind==='aspect'&&matchesNode(node,wheelFocus)),type=node.dataset.focusPiece;
         node.classList.toggle('is-kept',isKept);
+        if(type==='aspect')node.setAttribute('tabindex',(!lockedState&&!rowLockedState||isKept)?'0':'-1');
         node.classList.toggle('is-aspect-endpoint',(isRowDriven||aspectFocus)&&isKept&&(type==='placement'||type==='leader'));
         node.classList.toggle('is-selected',!!lockedState&&matchesNode(node,lockedState)||(!filterState&&!!rowLockedState&&rowMarksNode(node,rowLockedState)));
         node.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(node,hoverState)||(!filterState&&!rowLockedState&&!!rowHoverState&&rowMarksNode(node,rowHoverState)));
       });
     }
+    // A ruler hover previews the wheel only; the click lock owns the expanded
+    // tile and the Relationships list, including when previewing another ruler.
+    if(rulerPreview)return;
+    updateLearnCore(lockedState);
     if(wheelOnlyExternal)return;
     ['A','B'].forEach(slot=>{const panel=document.getElementById(slot==='A'?'skyFoundationA':'skyFoundationB');if(!panel)return;panel.classList.toggle('has-ledger-isolation',!!filterState);panel.querySelectorAll('.sky-foundation-row[data-placement]').forEach(row=>{row.classList.toggle('is-kept',!!filterState&&filterKeep.placements.has(`${slot}:${row.dataset.placement}`));row.classList.toggle('is-selected',!!lockedState&&matchesNode(row,lockedState));row.classList.toggle('is-hovered',!!hoverState&&!lockedState&&matchesNode(row,hoverState))})});
     // A clicked/tapped wheel selection temporarily narrows the Relationships
@@ -431,11 +542,19 @@
     window.dispatchEvent(new CustomEvent('relphi:sky-foundation-filter-changed',{detail:{state:focusState?{...focusState,mode:lockedState?'selected':'hover'}:null,origin:lockedState&&selectionOrigin?{...selectionOrigin}:null,relationshipIndexes}}));
   }
   function distanceToSegment(x,y,a,b){const dx=b.x-a.x,dy=b.y-a.y,length=dx*dx+dy*dy;if(!length)return Math.hypot(x-a.x,y-a.y);const t=Math.max(0,Math.min(1,((x-a.x)*dx+(y-a.y)*dy)/length)),px=a.x+t*dx,py=a.y+t*dy;return Math.hypot(x-px,y-py)}
+  // The same eligibility rule governs native SVG hits, nearest-line fallback,
+  // keyboard activation and virtual/mobile pointers. Hover is not a lock.
+  function aspectInteractive(line){
+    if(!line||line.hidden||PERSISTENT_HIDDEN_CLASSES.some(name=>line.classList.contains(name)))return false;
+    if((lockedState||rowLockedState)&&!line.classList.contains('is-kept'))return false;
+    const style=getComputedStyle(line);
+    return style.display!=='none'&&style.visibility!=='hidden'&&style.pointerEvents!=='none';
+  }
   function nearestAspect(event){
     if(!Number.isFinite(event.clientX)||!Number.isFinite(event.clientY))return null;
     let nearest=null,best=Infinity;
     document.querySelectorAll('[data-layer="aspects"] > line.sky-foundation-aspect:not(.sky-foundation-aspect-hit)').forEach(line=>{
-      if(line.classList.contains('sky-chart-filter-hidden')||line.classList.contains('sky-chart-orb-hidden')||line.classList.contains('sky-orb-filter-hidden')||getComputedStyle(line).display==='none')return;
+      if(!aspectInteractive(line))return;
       const matrix=line.getScreenCTM(),svg=line.ownerSVGElement;if(!matrix||!svg?.createSVGPoint)return;
       const start=svg.createSVGPoint(),end=svg.createSVGPoint();start.x=Number(line.getAttribute('x1'));start.y=Number(line.getAttribute('y1'));end.x=Number(line.getAttribute('x2'));end.y=Number(line.getAttribute('y2'));
       const distance=distanceToSegment(event.clientX,event.clientY,start.matrixTransform(matrix),end.matrixTransform(matrix));if(distance<best){best=distance;nearest=line}
@@ -448,7 +567,7 @@
     if(node&&root.contains(node)){
       // A struck SVG aspect already identifies its exact endpoints and
       // harmonic. Do not replace it with a geometrically nearby crossing line.
-      return node;
+      if(node.dataset.interactive!=='aspect'||aspectInteractive(node))return node;
     }
     const wheel=event.target.closest?.('#skyFoundationWheelMount .sky-foundation-wheel');
     if(wheel&&root.contains(event.target))return nearestAspect(event);
@@ -595,7 +714,27 @@
     clearWheel:clearExternalWheel,
     captureFocus,
     restoreFocus,
-    getSelectionOrigin
+    getSelectionOrigin,
+    learnSignContext,
+    learnPairContext,
+    // Read-only access to the same resolved geometry that produced the relationship rows.
+    relationshipEndpoint(slot,id){
+      const list=slot==='B'?current.listB:current.listA;
+      const cusps=slot==='B'?current.cuspsB:current.cuspsA;
+      const record=list.find(item=>item.id===id);
+      if(!record)return null;
+      const house=record.house;
+      const cusp=house!=null?cusps[house-1]:null;
+      const sun=list.find(item=>item.id==='sun');
+      const asc=list.find(item=>item.id==='asc');
+      const day=cusps.length===12&&sun&&asc?norm(sun.value-asc.value)>=180:null;
+      return {longitude:record.value,sign:record.sign,house,cusp:Number.isFinite(cusp)?cusp:null,day};
+    },
+    syncLearnHouseRing(){
+      current.cuspsA=Array.from({length:12},(_,i)=>(learnAsc()*30+i*30)%360);
+      annotateHouseLayer('a-houses','A');
+      applyState();
+    }
   });
   // Wheel-to-Relationships navigation uses endpoint identity rather than a
   // transient list index, so A↔A, B↔B and A↔B survive sorting and filtering.
@@ -639,9 +778,12 @@
     if(!mount)return;
     let label=mount.querySelector(':scope > .sky-wheel-sector-description');
     if(!label){label=document.createElement('div');label.className='sky-wheel-sector-description';label.setAttribute('role','status');label.setAttribute('aria-live','polite');mount.appendChild(label)}
-    if(!spec||!['house','sign','placement'].includes(spec.kind)){label.hidden=true;return}
-    const vocab=window.RelphiSkyVocab?.describeFocus?.(spec.kind,spec.value);
+    if(!spec||!['house','sign','placement','aspect'].includes(spec.kind)){label.hidden=true;return}
+    const vocab=window.RelphiSkyVocab?.describeFocus?.(spec.kind,spec.kind==='aspect'?node?.dataset?.aspect:spec.value)||
+      (spec.kind==='sign'?{name:SIGN_NAMES[Number(spec.value)],description:'Explore this zodiac sign and its relationships.'}:
+       spec.kind==='house'?{name:'House '+spec.value,description:'Explore this house of experience.'}:null);
     if(!vocab?.description){label.hidden=true;return}
+    if(wheel.dataset.skyExperience==='learn'){const index=learnSignForState(spec),ctx=Number.isInteger(index)?learnSignContext(index):null;if(ctx)node=wheel.querySelector('[data-layer="a-houses"] [data-house="'+ctx.house+'"]')||node}
     const bbox=node?.getBoundingClientRect(),outer=wheel.getBoundingClientRect();
     // Four corner spaces outside the circular perimeter, determined by the
     // activated node position. Use the upper/lower and left/right half of wheel.
@@ -659,10 +801,11 @@
   // it directly rather than dispatching a second click through unrelated
   // capture-phase listeners (which can retarget or consume that click).
   function toggleInteractiveNode(node){
-    if(!node)return;
+    if(!node||(node.dataset.interactive==='aspect'&&!aspectInteractive(node)))return;
     wheelOnlyExternal=false;
     rowLockedState=null;rowHoverState=null;
     const next=specFrom(node);
+    if(next?.kind==='aspect'&&window.RelphiSkyStartupMode?.readMode?.()==='learn')next.learnAnchor=learnSignForState(lockedState);
     if(same(lockedState,next)){lockedState=null;selectionOrigin=null}
     else{lockedState=next;selectionOrigin=originFromNode(node,next)}
     hoverState=null;applyState();
@@ -720,6 +863,14 @@
     event.preventDefault();
   }
   function cancelTouch(event){if(touchGesture?.id===event.pointerId)touchGesture=null}
+  // Sound consumes the same relationship eligibility/endpoint computation as the wheel.
+  function coreToneTarget(event){return event.target.closest?.('#skyFoundationLearnCore [data-core-select-sign]')}
+  function playCoreTone(tile){
+    if(!tile||window.RelphiSkyStartupMode?.readMode?.()!=='learn')return;
+    const sign=Number(tile.dataset.coreSelectSign);
+    if(!Number.isInteger(sign)||sign<0||sign>11)return;
+    window.RelphiSkyCoreTones?.play(sign,keepSets({kind:'sign',sky:null,value:sign}).signs);
+  }
   function bind(){
     const root=document.getElementById('skyFoundationRoot');if(!root||root.dataset.foundationInteractionsV2Bound==='true')return;root.dataset.foundationInteractionsV2Bound='true';
     // Capture wheel gestures at document level: foreground placements,
@@ -761,6 +912,9 @@
     root.addEventListener('pointerover',event=>{
       if(event.pointerType==='touch'||event.pointerType==='pen'||(event.pointerType==='mouse'&&performance.now()<ignoreNativeClickUntil))return;
       wheelOnlyExternal=false;
+      const toneTile=coreToneTarget(event);if(toneTile&&!toneTile.contains(event.relatedTarget))playCoreTone(toneTile);
+      const ruler=event.target.closest?.('#skyFoundationLearnCore button[data-core-ruler]');
+      if(ruler){if(ruler.contains(event.relatedTarget))return;const next={kind:'ruler',sky:null,value:ruler.dataset.coreRuler};if(!same(hoverState,next)){hoverState=next;applyState()}return}
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;
@@ -770,17 +924,22 @@
     root.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||event.pointerType==='pen')return;if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
     root.addEventListener('pointerout',event=>{
       if(event.pointerType==='touch'||event.pointerType==='pen')return;
+      const toneTile=coreToneTarget(event);if(toneTile&&!toneTile.contains(event.relatedTarget))window.RelphiSkyCoreTones?.stop();
+      const ruler=event.target.closest?.('#skyFoundationLearnCore button[data-core-ruler]');
+      if(ruler){if(!ruler.contains(event.relatedTarget)&&hoverState?.kind==='ruler'&&hoverState.value===ruler.dataset.coreRuler){hoverState=null;applyState()}return}
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('focusin',event=>{
+      const toneTile=coreToneTarget(event);if(toneTile?.matches(':focus-visible'))playCoreTone(toneTile);
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node)return;rowHoverState=null;hoverState=specFrom(node);applyState()
     });
     root.addEventListener('focusout',event=>{
+      const toneTile=coreToneTarget(event);if(toneTile&&!toneTile.contains(event.relatedTarget))window.RelphiSkyCoreTones?.stop();
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
@@ -807,18 +966,31 @@
     },true);
     root.addEventListener('click',event=>{
       wheelOnlyExternal=false;
+      const core=event.target.closest?.('#skyFoundationLearnCore');
+      if(core){
+        const sound=event.target.closest('[data-core-sound]');
+        if(sound){window.RelphiSkyCoreTones.toggle().then(enabled=>{sound.setAttribute('aria-pressed',String(enabled));sound.textContent=enabled?'Sound on':'Sound off';sound.title=enabled?'Mute geometry-derived tones':'Enable geometry-derived tones'});return}
+        const tab=event.target.closest('button[data-core-tab]'),ruler=event.target.closest('[data-core-ruler]'),sign=event.target.closest('[data-core-select-sign]'),clear=event.target.closest('[data-core-clear-ruler]');
+        if(tab){window.RelphiSkyCoreTones?.stop();core.dataset.coreActiveTab=tab.dataset.coreTab;updateLearnCore(lockedState);return}
+        if(sign){if(event.pointerType==='touch'||event.pointerType==='pen'||event.detail===0)playCoreTone(sign);toggleInteractiveNode(sign);return}
+        if(ruler||clear){const next=clear?null:ruler?{kind:'ruler',sky:null,value:ruler.dataset.coreRuler}:{kind:'sign',sky:null,value:Number(sign.dataset.coreSelectSign)};
+          lockedState=same(lockedState,next)?null:next;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=lockedState?{source:'Sky Card Core',...lockedState}:null;
+          clearWheelTargets();window.RelphiInlineRelationship?.collapse?.();applyState();}
+        return;
+      }
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       const node=interactive(event);if(node){event.preventDefault();toggleInteractiveNode(node);return}if(clearableWhitespace(event))clearFromWhitespace()
     });
     root.addEventListener('keydown',event=>{wheelOnlyExternal=false;if(event.key==='Escape'){clearFromWhitespace();return}if(event.target.closest('.sky-foundation-relationship-row'))return;if(!['Enter',' '].includes(event.key))return;const node=interactive(event);if(!node)return;event.preventDefault();toggleInteractiveNode(node)});
   }
-  function whereWhenEditing(){return document.documentElement.dataset.skyWhereWhenEditing==='true'}
   async function refresh(){
-    refreshQueued=false;if(whereWhenEditing()&&!(records(read(KEYS.A)).length===0&&records(read(KEYS.B)).length>0))return;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false'||!HARMONIC)return;ensurePanel();
-    const preparedA=prepare(read(KEYS.A),'A'),preparedB=prepare(read(KEYS.B),'B'),relations=relationships(preparedA.list,preparedB.list),nextSignature=relationshipSignature(relations);current={listA:preparedA.list,listB:preparedB.list,relations,cuspsA:preparedA.houseCusps,cuspsB:preparedB.houseCusps};
+    // Relationship annotations read the committed sky and never replace the draft editor.
+    refreshQueued=false;const root=document.getElementById('skyFoundationRoot'),wheel=document.querySelector('#skyFoundationWheelMount > .sky-foundation-wheel');if(!root||!wheel||root.getAttribute('aria-busy')!=='false'||!HARMONIC)return;ensurePanel();
+    const isLearn=wheel.dataset.skyExperience==='learn';
+    const preparedA=isLearn?{list:[],houseCusps:Array.from({length:12},(_,i)=>(Number(document.documentElement.dataset.skyLearnAscendant||0)*30+i*30)%360)}:prepare(read(KEYS.A),'A'),preparedB=isLearn?{list:[],houseCusps:[]}:prepare(read(KEYS.B),'B'),relations=isLearn?templateRelationships():relationships(preparedA.list,preparedB.list),nextSignature=relationshipSignature(relations);current={listA:preparedA.list,listB:preparedB.list,relations,cuspsA:preparedA.houseCusps,cuspsB:preparedB.houseCusps};
     annotateHouseLayer('a-houses','A');annotateHouseLayer('b-houses','B');annotateSigns();annotatePlacements(current.listA,current.listB);annotateAspects(relations);annotateLedger('A',current.listA);annotateLedger('B',current.listB);
-    if(!preparedA.list.length||!preparedB.list.length){
+    if(!isLearn&&(!preparedA.list.length||!preparedB.list.length)){
       // In either single-sky state the intrasky renderer owns the remaining
       // A↔A or B↔B rows. Remove only orphaned intersky rows.
       const list=document.getElementById('skyFoundationRelationshipList');
@@ -835,6 +1007,7 @@
   function schedule(){if(refreshQueued)return;refreshQueued=true;requestAnimationFrame(refresh)}
   function start(){
     window.addEventListener('relphi:sky-foundation-ready',schedule);
+    window.addEventListener('relphi:sky-experience-changed',()=>window.RelphiSkyCoreTones?.stop());
     window.addEventListener('relphi:sky-b-removed',schedule);
     window.addEventListener('relphi:sky-orb-limit-changed',schedule);
     window.addEventListener('relphi:sky-by-sign-changed',schedule);
