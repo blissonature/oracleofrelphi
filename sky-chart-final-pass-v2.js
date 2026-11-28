@@ -647,9 +647,10 @@
   function refresh() {
     queued = false;
     if (whereWhenEditing() && window.RelphiSkyStartupMode?.readMode?.()!=='learn') {
-      const relationshipPanel=document.getElementById('skyFoundationRelationships');
-      const bar=document.querySelector('#skyFoundationFocus > .sky-chart-filter-bar');
-      ensureFocusStructure(relationshipPanel,bar);if(bar)syncLearnFilters(bar);
+      // Keep the shared toolbar and committed-chart controls initialized without touching the draft editor.
+      addFilters();
+      refreshPlacementFilter();
+      applyFilters();
       return;
     }
     ['A','B'].forEach(slot => {

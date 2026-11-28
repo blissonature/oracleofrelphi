@@ -355,6 +355,7 @@ try{
    assert.deepEqual(topLayout,{first:true,above:true,button:true});
    const relationships=page.locator('#skyFoundationRelationships');
    await relationships.waitFor({state:'visible',timeout:20000});
+   await relationships.locator('.sky-foundation-relationship-row[data-relationship-mode="A-A"]').first().waitFor({state:'visible',timeout:20000});
    const exploreLayout=await relationships.evaluate(el=>{
      const p=el.getBoundingClientRect(),w=document.getElementById('skyFoundationWheelMount').getBoundingClientRect(),a=document.getElementById('skyFoundationA').getBoundingClientRect();
      return {right:p.left>=w.right-1,below:p.top>=w.bottom-1,cardBefore:a.right<=w.left+1,within:p.right<=innerWidth+1,columns:getComputedStyle(document.getElementById('skyFoundationRelationshipList')).gridTemplateColumns.split(' ').length};
