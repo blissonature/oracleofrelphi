@@ -12,13 +12,13 @@ const FILTER_KEY='relphiSkyVocabFilterV1';
 const SCOPE_FILTER_KEY='relphiSkyVocabScopeFilterV1';
 const GROUP_OPEN_KEY='relphiSkyVocabGroupOpenV1';
 const SIGNS=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-const SIGN_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
+const SIGN_COLORS=window.RelphiSkyWheelSpec.COLORS;
 const SIGN_RULERS=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
 const SIGN_POLARITIES=[[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]];
 const HOUSE_POLARITIES=[[1,7],[2,8],[3,9],[4,10],[5,11],[6,12]];
 const SIGN_FIGURES=['Lamb','Bull','Twins','Crab','Lion','Maiden','Scales','Scorpion','Bow','Kid','Bucket','Fishes'];
-const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
-const HOUSE_MENU_DESCRIPTIONS=['','self, body, approach','money, possessions, worth','communication, siblings, local life','home, family, roots','pleasure, creativity, children','work, health, routine','partners, bonds, agreements','loss, death, other people’s resources','travel, belief, higher learning','career, reputation, public life','friends, groups, hopes','solitude, sorrow, hidden things'];
+const HOUSE_COLORS=window.RelphiHouseMedallion.colors;
+const HOUSE_MENU_DESCRIPTIONS=window.RelphiHouseMedallion.descriptions;
 const SIGN_REFERENTS={
   Aries:'initiative, directness, courage, impulse, and beginning',
   Taurus:'embodiment, value, pleasure, endurance, and material continuity',
@@ -496,7 +496,7 @@ function placementRailGradient(records,keyOf,colorOf){
 }
 function applyPlacementRails(line,records,slot){
   line.dataset.vocabPlacementColors='true';
-  line.dataset.vocabHouseSystem=activeHouseSystem(slot);
+  line.dataset.vocabHouseSystem=slot?activeHouseSystem(slot):'whole-sign';
   line.style.setProperty('--vocab-placement-signs',placementRailGradient(records,record=>record.sign,key=>SIGN_COLORS[key]));
   line.style.setProperty('--vocab-placement-houses',placementRailGradient(records,record=>record.house||null,key=>HOUSE_COLORS[key-1]));
 }
@@ -1887,7 +1887,13 @@ window.addEventListener('scroll',scheduleDropdownPosition,true);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});
 function renderTemplate(target,asc){
   const content=document.createElement('div');content.className='sky-vocab-paragraph';
-  for(let i=0;i<12;i++){const sign=(asc+i)%12,line=document.createElement('div');line.append(token(signInfo(sign),'sign',true),token(houseInfo(i+1),'house',false,' in '));content.appendChild(line)}
+  for(let i=0;i<12;i++){
+    const sign=(asc+i)%12,house=i+1,line=document.createElement('div');
+    line.className='sky-vocab-line';
+    applyPlacementRails(line,[{sign,house}],null);
+    line.append(token(signInfo(sign),'sign',true),token(houseInfo(house),'house',false,' in '));
+    content.appendChild(line);
+  }
   target.replaceChildren(content);
   target.onclick=progressive;target.onkeydown=event=>{if(['Enter',' '].includes(event.key))progressive(event)};
 }

@@ -552,7 +552,7 @@ html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations
 #skyFoundationLearnCore .sky-core-house-tiles>[data-core-content]{min-width:0;padding:10px 8px 12px;border:1px solid rgba(31,27,24,.15);border-radius:8px;margin:0 0 4px;background:#fffdf8}
 #skyFoundationLearnCore .sky-core-house-tile{position:relative;display:grid;grid-template-columns:var(--sky-card-house-glyph-size) minmax(0,1fr) var(--sky-card-house-glyph-size);align-items:center;gap:8px;min-height:42px;width:100%;padding:7px 10px;border:1px solid rgba(31,27,24,.15);border-radius:8px;background:#fff;color:#332e2a;text-align:left;overflow:hidden}
 #skyFoundationLearnCore .sky-core-house-tile > :is(.relphi-house-medallion,.sky-card-house-toggle-glyph){justify-self:center;align-self:center}
-#skyFoundationLearnCore .sky-core-house-tile .sky-foundation-row-name{font-size:.79rem}
+#skyFoundationLearnCore .sky-core-house-tile .sky-foundation-row-name{font-size:.79rem;color:var(--ruler-sign-color)}
 #skyFoundationLearnCore [data-core-view="houses"]>.sky-core-house-tile{grid-template-columns:var(--sky-card-house-glyph-size) minmax(0,1fr) var(--sky-card-house-glyph-size) 5.25rem;column-gap:6px}
 #skyFoundationLearnCore .sky-core-house-description{min-width:0;overflow-wrap:break-word;font:700 .75rem/1.3 system-ui,sans-serif;white-space:normal}
 #skyFoundationLearnCore [data-core-view="houses"]>.sky-core-house-tile .sky-foundation-row-name{overflow:visible;text-overflow:clip}

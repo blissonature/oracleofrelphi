@@ -78,8 +78,8 @@ function hydrateCanonicalGlyphs(scope){
 }
 const RELATIONSHIP_GLYPH_DISPLAY_SIZE=38;
 const RELATIONSHIP_GLYPH_RADIUS=19;
-function glyphHost(id,className='sky-card-house-detail-glyph'){
-  const host=document.createElement('span');host.className=className;host.dataset.relphiHouseGlyph=String(id||'').toLowerCase();host.setAttribute('aria-hidden','true');return host;
+function glyphHost(id,className='sky-card-house-detail-glyph',color=''){
+  const host=document.createElement('span');host.className=className;host.dataset.relphiHouseGlyph=String(id||'').toLowerCase();if(color)host.dataset.relphiHouseGlyphColor=color;host.setAttribute('aria-hidden','true');return host;
 }
 function relationshipMatchedRadius(host){
   const rectWidth=host?.getBoundingClientRect?.().width||0;
@@ -95,7 +95,7 @@ function hydrateHouseGlyphs(scope){
     host.dataset.relphiHouseGlyphHydrated='true';host.replaceChildren();
     const svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','-32 -32 64 64');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');host.appendChild(svg);
     try{
-      const bubble=component.createBubble(svg,entry.id,{radius:relationshipMatchedRadius(host),padding:1,color:'#111111',fill:'#ffffff'});
+      const bubble=component.createBubble(svg,entry.id,{radius:relationshipMatchedRadius(host),padding:1,color:host.dataset.relphiHouseGlyphColor||'#111111',fill:'#ffffff'});
       if(bubble.circle){bubble.circle.style.opacity='0';bubble.circle.setAttribute('aria-hidden','true')}
       Promise.resolve(bubble.ready).catch(error=>{host.dataset.relphiHouseGlyphHydrated='error';console.error('[Sky Chart] Canonical House Card Hits glyph failed',entry.id,error)});
     }catch(error){host.dataset.relphiHouseGlyphHydrated='error';console.error('[Sky Chart] Canonical House Card Hits glyph failed',entry.id,error)}
@@ -143,7 +143,7 @@ function templateHousesView(asc,bySign=false){
   const descriptions=window.RelphiHouseMedallion.descriptions;
   return `<div class="sky-foundation-ledger sky-core-house-tiles" data-core-view="${bySign?'signs':'houses'}">${Array.from({length:12},(_,i)=>{
     const signIndex=bySign?i:(asc+i)%12,h=(signIndex-asc+12)%12+1,name=SIGNS[signIndex],description=descriptions[h];
-    const glyph=glyphHost(signIdentity(signIndex),"sky-card-house-toggle-glyph").outerHTML,medallion=houseMedallionMarkup(h),label=`<span class="sky-foundation-row-name">${esc(name)}</span>`;
+    const glyph=glyphHost(signIdentity(signIndex),"sky-card-house-toggle-glyph",fingerprintColor(signIndex)).outerHTML,medallion=houseMedallionMarkup(h),label=`<span class="sky-foundation-row-name">${esc(name)}</span>`;
     const content=bySign?glyph+label+medallion:medallion+`<span class="sky-core-house-description">${esc(description)}</span>`+glyph+label;
     return `<button type="button" class="sky-foundation-row sky-core-house-tile" data-core-select-sign="${signIndex}" data-house="${h}" data-sign="${signIndex}" data-interactive="sign" aria-pressed="false" aria-label="${esc(bySign?name+', House '+h:'House '+h+': '+description+', '+name)}" style="--ruler-sign-color:${fingerprintColor(signIndex)};--ruler-house-color:${fingerprintColor(h-1)}"><span class="sky-card-ruler-rail sky-card-ruler-rail-sign" aria-hidden="true"></span>${content}<span class="sky-card-ruler-rail sky-card-ruler-rail-house" aria-hidden="true"></span></button>`;
   }).join('')}</div>`;

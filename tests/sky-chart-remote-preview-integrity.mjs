@@ -127,11 +127,11 @@ try{
      const center=r=>({x:r.x+r.width/2,y:r.y+r.height/2});
      return rows.map(row=>{
        const r=box(row),house=box(row.querySelector('.relphi-house-medallion')),nameEl=row.querySelector('.sky-foundation-row-name'),name=box(nameEl),descEl=row.querySelector('.sky-core-house-description'),desc=box(descEl),host=row.querySelector('.sky-card-house-toggle-glyph'),g=box(host),svg=box(host.querySelector('svg'));
-       return {ordered:house.right<=desc.left&&desc.right<=g.left&&g.right<=name.left,centered:[house,desc,g,svg,name].every(b=>Math.abs(center(b).y-center(r).y)<1),svgCentered:Math.abs(center(g).x-center(svg).x)<1,width:g.width,svgWidth:svg.width,house:row.dataset.house,description:descEl.textContent,canonical:window.RelphiHouseMedallion.descriptions[row.dataset.house],sign:nameEl.textContent.toLowerCase(),expectedSign:window.RelphiSkyWheelSpec.SIGNS[Number(row.dataset.sign)],fits:row.scrollWidth<=row.clientWidth+1&&nameEl.scrollWidth<=nameEl.clientWidth+1&&descEl.scrollWidth<=descEl.clientWidth+1};
+       return {ordered:house.right<=desc.left&&desc.right<=g.left&&g.right<=name.left,centered:[house,desc,g,svg,name].every(b=>Math.abs(center(b).y-center(r).y)<1),svgCentered:Math.abs(center(g).x-center(svg).x)<1,width:g.width,svgWidth:svg.width,house:row.dataset.house,description:descEl.textContent,canonical:window.RelphiHouseMedallion.descriptions[row.dataset.house],sign:nameEl.textContent.toLowerCase(),expectedSign:window.RelphiSkyWheelSpec.SIGNS[Number(row.dataset.sign)],fits:row.scrollWidth<=row.clientWidth+1&&nameEl.scrollWidth<=nameEl.clientWidth+1&&descEl.scrollWidth<=descEl.clientWidth+1,colorMatch:(()=>{const c=window.RelphiSkyWheelSpec.COLORS[Number(row.dataset.sign)];const probe=document.createElement('span');probe.style.color=c;row.appendChild(probe);const color=getComputedStyle(probe).color;probe.remove();return getComputedStyle(nameEl).color===color&&host.dataset.relphiHouseGlyphColor===c&&Array.from(svg.querySelectorAll('.relphi-canonical-glyph *')).some(el=>el.getAttribute('fill')===c||el.getAttribute('stroke')===c)})()};
      });
    });
    console.log('CORE HOUSE GLYPH LAYOUT',viewport.width,JSON.stringify(houseLayout));
-   assert.ok(houseLayout.every((r,i)=>r.ordered&&r.centered&&r.svgCentered&&r.fits&&r.description===r.canonical&&r.sign===r.expectedSign&&r.house===String(i+1)&&Math.abs(r.width-(viewport.width<=520?29:30))<1&&Math.abs(r.width-r.svgWidth)<1),'House medallion, exact concern, canonical glyph and sign name in order, centered and unclipped');
+   assert.ok(houseLayout.every((r,i)=>r.ordered&&r.centered&&r.svgCentered&&r.fits&&r.colorMatch&&r.description===r.canonical&&r.sign===r.expectedSign&&r.house===String(i+1)&&Math.abs(r.width-(viewport.width<=520?29:30))<1&&Math.abs(r.width-r.svgWidth)<1),'House medallion, exact concern, canonical glyph and sign name in order, centered and unclipped');
    await houseRows.first().click();
    await core.locator('[data-core-content]:not([hidden]) [data-core-title] [data-relphi-house-glyph] svg').waitFor({state:'visible'});
    const titleGlyph=await core.locator('[data-core-title] .sky-card-house-detail-glyph').evaluate(el=>({width:el.getBoundingClientRect().width,svg:el.querySelector('svg').getBoundingClientRect().width}));
@@ -148,6 +148,17 @@ try{
    await core.getByRole('tab',{name:'Vocab',exact:true}).click();
    const vocabTokens=core.locator('[data-core-structure] .sky-vocab-token');
    assert.equal(await vocabTokens.count(),24);
+   const checkCoreVocabColors=async()=>{
+     const rows=await core.locator('.sky-vocab-line[data-vocab-placement-colors="true"]').evaluateAll(lines=>lines.map(line=>{
+       const sign=line.querySelector('[data-vocab-kind="sign"]'),house=line.querySelector('[data-vocab-kind="house"]'),index=window.RelphiSkyWheelSpec.SIGNS.indexOf(sign.dataset.vocabId),n=Number(house.dataset.vocabId.replace('house-',''));
+       const sc=window.RelphiSkyWheelSpec.COLORS[index],hc=window.RelphiHouseMedallion.colors[n-1],style=getComputedStyle(line);
+       return {sign:sign.dataset.vocabId,house:n,signColor:sign.dataset.vocabColor,houseColor:house.dataset.vocabColor,match:sign.dataset.vocabColor===sc&&house.dataset.vocabColor===hc&&line.style.getPropertyValue('--vocab-placement-signs').includes(sc)&&line.style.getPropertyValue('--vocab-placement-houses').includes(hc)&&style.backgroundImage.split('linear-gradient').length===3};
+     }));
+     assert.equal(rows.length,12);
+     assert.ok(rows.every((r,i)=>r.match&&r.house===i+1),'Vocab must use the full card paired sign/house rails');
+     console.log('CORE VOCAB COLOR PASS',viewport.width,JSON.stringify(rows));
+   };
+   await checkCoreVocabColors();
    const displayTrigger=focus.locator('[data-relationship-display-value]');
    const displayMenu=page.locator('#skyRelationshipDisplayPopover');
    await displayTrigger.click();
@@ -185,6 +196,7 @@ try{
    await displayTrigger.click();
    await allButton.click();
    await assertVocabLayers(7);
+   await checkCoreVocabColors();
    await page.keyboard.press('Escape');
    console.log('CORE VOCAB DISPLAY PASS',viewport.width,'all seven combinations, local reveal, tab reentry');
    await core.getByRole('tab',{name:'Rulers',exact:true}).click();
@@ -282,6 +294,10 @@ try{
    assert.equal(await trigger.getAttribute('data-selected-sign'),'11');
    await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-learn-ascendant="11"]');
    await checkWheel();
+   await core.getByRole('tab',{name:'Vocab',exact:true}).click();
+   await checkCoreVocabColors();
+   assert.equal(await core.locator('.sky-vocab-line [data-vocab-kind="sign"]').first().getAttribute('data-vocab-id'),'pisces');
+   await core.getByRole('tab',{name:'Houses',exact:true}).click();
    await focus.locator('[data-zodiac-summary]').click();
    await page.locator('#skyChartZodiacFilterMenu').waitFor({state:'visible'});
    assert.equal(await page.locator('#skyChartZodiacFilterMenu input[type=checkbox]').count(),12);
