@@ -48,9 +48,11 @@ try{
      await row.waitFor({state:'visible'});
      for(const handoff of ['blur','pointerout']){
        await page.evaluate(()=>navigator.clipboard.writeText('external capture sentinel'));
-       await row.evaluate(el=>el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:7,pointerType:'mouse',button:0,buttons:1,clientX:5,clientY:5})));
-       if(handoff==='blur')await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
-       else await row.evaluate(el=>el.dispatchEvent(new PointerEvent('pointerout',{bubbles:true,pointerId:7,pointerType:'mouse',relatedTarget:null})));
+       await row.evaluate((el,kind)=>{
+         el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:7,pointerType:'mouse',button:0,buttons:1,clientX:5,clientY:5}));
+         if(kind==='blur')window.dispatchEvent(new Event('blur'));
+         else el.dispatchEvent(new PointerEvent('pointerout',{bubbles:true,pointerId:7,pointerType:'mouse',relatedTarget:null}));
+       },handoff);
        await page.waitForTimeout(550);
        const value=await page.evaluate(()=>navigator.clipboard.readText());
        assert.equal(value,'external capture sentinel',handoff+' must cancel pending automatic clipboard write');
@@ -129,7 +131,7 @@ try{
      });
    });
    console.log('CORE HOUSE GLYPH LAYOUT',viewport.width,JSON.stringify(houseLayout));
-   assert.ok(houseLayout.every((r,i)=>r.houseLeft&&r.glyphRight&&r.centered&&r.svgCentered&&r.house===String(i+1)&&Math.abs(r.width-(viewport.width<=520?20:21))<1&&Math.abs(r.width-r.svgWidth)<1),'House medallion left and shared full-card glyph right, centered in every row');
+   assert.ok(houseLayout.every((r,i)=>r.houseLeft&&r.glyphRight&&r.centered&&r.svgCentered&&r.house===String(i+1)&&Math.abs(r.width-(viewport.width<=520?29:30))<1&&Math.abs(r.width-r.svgWidth)<1),'House medallion left and shared full-card glyph right, centered in every row');
    await houseRows.first().click();
    await core.locator('[data-core-content]:not([hidden]) [data-core-title] [data-relphi-house-glyph] svg').waitFor({state:'visible'});
    const titleGlyph=await core.locator('[data-core-title] .sky-card-house-detail-glyph').evaluate(el=>({width:el.getBoundingClientRect().width,svg:el.querySelector('svg').getBoundingClientRect().width}));

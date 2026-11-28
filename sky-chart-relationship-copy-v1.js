@@ -85,8 +85,7 @@
       if(!rows.length)return;
       const text=serializeBlock(rows);
       if(!text)return;
-      state.copyPromise=writeClipboard(text,()=>longPress===state&&!document.hidden&&document.hasFocus());
-    const copied=await state.copyPromise;
+      const copied=await writeClipboard(text);
       if(!copied)return;
       window.clearTimeout(feedbackTimer);
       button.textContent=`Copied ${rows.length}`;
@@ -214,13 +213,16 @@
       event.preventDefault();
       event.stopPropagation();
     }
-    const copied=await writeClipboard(text);
-    if(!copied)return false;
-    state.copied=true;
-    state.row.dataset.relationshipLongPressCopied='true';
-    window.setTimeout(()=>{if(state.row.isConnected)delete state.row.dataset.relationshipLongPressCopied},900);
-    try{window.getSelection?.()?.removeAllRanges()}catch(_){}
-    return true;
+    state.copyPromise=(async()=>{
+      const copied=await writeClipboard(text,()=>longPress===state&&state.row.isConnected&&!document.hidden&&document.hasFocus());
+      if(!copied)return false;
+      state.copied=true;
+      state.row.dataset.relationshipLongPressCopied='true';
+      window.setTimeout(()=>{if(state.row.isConnected)delete state.row.dataset.relationshipLongPressCopied},900);
+      try{window.getSelection?.()?.removeAllRanges()}catch(_){}
+      return true;
+    })();
+    return state.copyPromise;
   }
   function beginLongPress(event){
     if(event.button!==0&&!['touch','pen'].includes(event.pointerType))return;
