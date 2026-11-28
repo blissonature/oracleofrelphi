@@ -7,7 +7,6 @@ if(!/(^|\/)sky-chart\.html$/.test(location.pathname)||window.__relphiSkyVocabTab
 window.__relphiSkyVocabTabV1=true;
 
 const KEYS={A:'relphiSkyChartA',B:'relphiSkyChartB'};
-const DISPLAY_KEY='relphiSkyVocabDisplayV1';
 const VIEW_KEY='relphiSkyVocabViewV1';
 const FILTER_KEY='relphiSkyVocabFilterV1';
 const SCOPE_FILTER_KEY='relphiSkyVocabScopeFilterV1';
@@ -258,12 +257,8 @@ function houseInfo(number){return{id:'house-'+number,glyphId:null,name:HOUSE_NAM
 function placementInfo(record){return{id:record.id,glyphId:record.glyphId,name:record.name,referent:placementReferent(record),fallbackGlyph:record.fallbackGlyph||record.name,color:'',value:record.value}}
 function aspectInfo(aspect){return{id:aspect.id,glyphId:aspect.id,name:ASPECT_NAMES[aspect.id]||aspect.id,referent:ASPECT_REFERENTS[aspect.id]||'relationship',fallbackGlyph:ASPECT_NAMES[aspect.id]||aspect.id,color:String(aspect?.color||'')}}
 
-function displayState(){
-  const value=readJson(localStorage,DISPLAY_KEY,null);
-  const state={glyphs:value?.glyphs!==false,names:value?.names!==false,referents:value?.referents!==false};
-  return Object.values(state).some(Boolean)?state:{glyphs:true,names:true,referents:true};
-}
-function saveDisplay(next){writeJson(localStorage,DISPLAY_KEY,next);document.documentElement.dataset.skyVocabGlyphs=next.glyphs?'true':'false';document.documentElement.dataset.skyVocabNames=next.names?'true':'false';document.documentElement.dataset.skyVocabReferents=next.referents?'true':'false'}
+// Both natal Vocab and Learn's template use the canonical Display controller.
+function displayState(){return window.RelphiSkyRelationshipDisplay.getState()}
 function filterState(){
   const value=readJson(sessionStorage,FILTER_KEY,null);
   return{relationships:value?.relationships!==false};
@@ -1502,10 +1497,10 @@ function refreshGroupPreviews(root=document){
 }
 function refreshDisplayLayers(){
   syncControlState();
-  document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>{
-    rerenderTokens(panel);
-    refreshGroupPreviews(panel);
-  });
+  // A global preset resets local reveals consistently, regardless of the
+  // currently visible mode. The token renderer remains shared by all Vocab.
+  document.querySelectorAll('.sky-vocab-token').forEach(node=>{node.dataset.vocabLocalStage='0';renderToken(node)});
+  refreshGroupPreviews();
 }
 function rerenderPanels(){vocabWheelTouchLine=null;clearVocabWheelContext();syncControlState();document.querySelectorAll('[data-sky-vocab-panel]').forEach(panel=>renderParagraph(panel.dataset.skyVocabPanel,panel))}
 function releaseWheelIsolationForManualFilter(){
@@ -1513,7 +1508,7 @@ function releaseWheelIsolationForManualFilter(){
   wheelFilterState=null;wheelFilterSpec=null;
   const clear=document.getElementById('skyFoundationClearIsolation');if(clear&&!clear.hidden)clear.click();
 }
-function setLayerAll(){saveDisplay({glyphs:true,names:true,referents:true});refreshDisplayLayers()}
+function setLayerAll(){window.RelphiSkyRelationshipDisplay.setState({glyphs:true,names:true,referents:true})}
 function setDimensionAll(slot,kind,checked){
   releaseWheelIsolationForManualFilter();
   const all=kind==='placements'?records(slot).map(record=>record.id):kind==='signs'?ALL_SIGNS:ALL_HOUSES;
@@ -1557,7 +1552,7 @@ function ensurePanel(slot,view){
     input.addEventListener('change',()=>setHarmonicWindowFromVocab(input,true));
     input.addEventListener('blur',()=>setHarmonicWindowFromVocab(input,true));
   });
-  panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();if(!input.checked&&state[input.dataset.vocabLayer]&&Object.values(state).filter(Boolean).length===1){syncControlState();return}state[input.dataset.vocabLayer]=input.checked;saveDisplay(state);refreshDisplayLayers()}));
+  panel.querySelectorAll('[data-vocab-layer]').forEach(input=>input.addEventListener('change',()=>{const state=displayState();if(!input.checked&&state[input.dataset.vocabLayer]&&Object.values(state).filter(Boolean).length===1){syncControlState();return}state[input.dataset.vocabLayer]=input.checked;window.RelphiSkyRelationshipDisplay.setState(state)}));
   panel.querySelectorAll('[data-vocab-shared-placement-toggle]').forEach(button=>button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openSharedPlacementDropdown(button)}));
   panel.querySelectorAll('[data-vocab-sign]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'signs',input.dataset.vocabSign,input.checked)));
   panel.querySelectorAll('[data-vocab-house]').forEach(input=>input.addEventListener('change',()=>toggleDimension(slot,'houses',input.dataset.vocabHouse,input.checked)));
@@ -1743,7 +1738,7 @@ function installStyles(){
   `;document.head.appendChild(style);
 }
 function render(){
-  queued=false;if(vocabWheelContextLine&&!vocabWheelContextLine.isConnected){vocabWheelTouchLine=null;clearVocabWheelContext()}installStyles();saveDisplay(displayState());['A','B'].forEach(ensureSlot);syncControlState();
+  queued=false;if(vocabWheelContextLine&&!vocabWheelContextLine.isConnected){vocabWheelTouchLine=null;clearVocabWheelContext()}installStyles();['A','B'].forEach(ensureSlot);syncControlState();
 }
 function schedule(){if(queued)return;queued=true;requestAnimationFrame(render)}
 function relationshipRowSlots(row){
@@ -1870,7 +1865,7 @@ window.addEventListener('relphi:sky-foundation-clear-selection',()=>{
 window.addEventListener('relphi:sky-house-focus-bridge-changed',event=>mirrorHouseBridge(event.detail));
 window.addEventListener('relphi:sky-zodiac-filter-changed',event=>mirrorZodiacBridge(event.detail));
 window.addEventListener('relphi:sky-house-multiselect-changed',event=>mirrorSharedHouseFilters(event.detail));
-window.addEventListener('relphi:sky-display-changed',schedule);
+window.addEventListener('relphi:sky-display-changed',refreshDisplayLayers);
 document.addEventListener('pointerdown',mirrorDirectWheelClick,true);
 document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
 [
@@ -1878,7 +1873,7 @@ document.addEventListener('pointerdown',clearVocabWheelContextFromBlank,true);
   'relphi:sky-orb-limit-changed','relphi:sky-harmonic-window-model-changed','relphi:sky-harmonic-window-visibility-changed','relphi:sky-placement-multiselect-changed','relphi:sky-working-copy-updated','relphi:saved-sky-loaded',
   'relphi:sky-b-restored','relphi:sky-session-recovered'
 ].forEach(name=>window.addEventListener(name,schedule));
-window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key)||event.key===DISPLAY_KEY)schedule()});
+window.addEventListener('storage',event=>{if(!event.key||Object.values(KEYS).includes(event.key))schedule()});
 window.addEventListener('pageshow',schedule);
 document.addEventListener('pointerdown',event=>{
   if(!openDropdownState)return;

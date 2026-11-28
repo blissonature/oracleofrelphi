@@ -118,6 +118,49 @@ try{
    const core=page.locator('#skyFoundationLearnCore');
    const coreErrors=[];
    page.on('pageerror',e=>{coreErrors.push(e.message);console.log('CORE PAGE ERROR',e.message)});
+   // The actual global menu drives the same three Vocab layers in Learn.
+   await core.getByRole('tab',{name:'Vocab',exact:true}).click();
+   const vocabTokens=core.locator('[data-core-structure] .sky-vocab-token');
+   assert.equal(await vocabTokens.count(),24);
+   const displayTrigger=focus.locator('[data-relationship-display-value]');
+   const displayMenu=page.locator('#skyRelationshipDisplayPopover');
+   await displayTrigger.click();
+   await displayMenu.waitFor({state:'visible'});
+   const ids=['glyphs','referents','names'],levels=['glyph','referent','name'];
+   const allButton=displayMenu.getByRole('button',{name:'All',exact:true});
+   const layers=await displayMenu.locator('[data-shared-display-layer]').count();
+   assert.equal(layers,3);
+   async function assertVocabLayers(mask){
+     const counts=await vocabTokens.evaluateAll((tokens,levels)=>levels.map(level=>tokens.filter(t=>t.querySelector('[data-vocab-level="'+level+'"]')).length),levels);
+     assert.deepEqual(counts,ids.map((_,i)=>mask&(1<<i)?24:0),'Core Vocab must honor the exact independent layer combination '+mask);
+     const state=await page.evaluate(()=>window.RelphiSkyRelationshipDisplay.getState());
+     assert.deepEqual(ids.map(id=>state[id]),ids.map((_,i)=>Boolean(mask&(1<<i))));
+   }
+   for(let mask=1;mask<8;mask++){
+     await allButton.click();
+     for(let i=0;i<ids.length;i++)if(!(mask&(1<<i)))await displayMenu.locator('[data-shared-display-layer="'+ids[i]+'"]').uncheck();
+     await assertVocabLayers(mask);
+     if([1,2,4].includes(mask))assert.equal(await displayMenu.locator('[data-shared-display-layer]:checked').isDisabled(),true,'Cannot deselect the last layer');
+   }
+   // Local progressive reveal works until an explicit global preset resets it.
+   await displayMenu.locator('[data-shared-display-layer="referents"]').uncheck();
+   await displayMenu.locator('[data-shared-display-layer="names"]').uncheck();
+   await page.keyboard.press('Escape');
+   await assertVocabLayers(1);
+   await vocabTokens.first().locator('[data-vocab-level="glyph"]').click();
+   assert.equal(await vocabTokens.first().locator('[data-vocab-level="referent"]').count(),1);
+   await displayTrigger.click();
+   await displayMenu.locator('[data-shared-display-layer="names"]').check();
+   await assertVocabLayers(5);
+   await page.keyboard.press('Escape');
+   await core.getByRole('tab',{name:'Houses',exact:true}).click();
+   await core.getByRole('tab',{name:'Vocab',exact:true}).click();
+   await assertVocabLayers(5);
+   await displayTrigger.click();
+   await allButton.click();
+   await assertVocabLayers(7);
+   await page.keyboard.press('Escape');
+   console.log('CORE VOCAB DISPLAY PASS',viewport.width,'all seven combinations, local reveal, tab reentry');
    await core.getByRole('tab',{name:'Rulers',exact:true}).click();
    console.log('CORE RULERS STATE',JSON.stringify(await core.evaluate(el=>({tab:el.dataset.coreActiveTab,selected:el.querySelector('[aria-selected="true"]')?.textContent,key:el.querySelector('[data-core-structure]')?.dataset.structureKey,content:el.querySelector('[data-core-structure]')?.innerText,buttons:el.querySelectorAll('[data-core-ruler]').length,ready:!!window.RelphiSkyCardHitsStructure?.renderTemplate}))));
    await core.locator('[data-core-ruler="Mars"]').waitFor({state:'visible',timeout:5000});

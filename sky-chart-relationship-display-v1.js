@@ -40,10 +40,6 @@ function readState(){
 function writeState(next){
   const state=normalizeState(next);
   try{window.RelphiSkyWorkingStorage.setItem(SHARED_STORAGE_KEY,JSON.stringify(state))}catch(_){}
-  document.documentElement.dataset.skyVocabGlyphs=state.glyphs?'true':'false';
-  document.documentElement.dataset.skyVocabNames=state.names?'true':'false';
-  document.documentElement.dataset.skyVocabReferents=state.referents?'true':'false';
-  document.documentElement.dataset.relationshipDisplay=state.referents?'referents':state.names?'names':state.glyphs?'glyphs':'none';
   return state;
 }
 function control(){return document.querySelector('[data-relationship-display-control]')}
@@ -84,6 +80,9 @@ function applyInlineToken(token,state,force=false){
 }
 function applyState(root=document,force=false,state=readState()){
   const next=normalizeState(state);
+  document.documentElement.dataset.skyVocabGlyphs=String(next.glyphs);
+  document.documentElement.dataset.skyVocabNames=String(next.names);
+  document.documentElement.dataset.skyVocabReferents=String(next.referents);
   document.documentElement.dataset.relationshipDisplay=next.referents?'referents':next.names?'names':next.glyphs?'glyphs':'none';
   root.querySelectorAll?.('.sky-progressive-token').forEach(t=>applyProgressiveToken(t,next,force));
   root.querySelectorAll?.('.inline-rel-progressive-token').forEach(t=>applyInlineToken(t,next,force));
@@ -98,13 +97,14 @@ function applyAdded(node){
   node.querySelectorAll?.('.sky-progressive-token').forEach(t=>applyProgressiveToken(t,state,false));
   node.querySelectorAll?.('.inline-rel-progressive-token').forEach(t=>applyInlineToken(t,state,false));
 }
+function announceState(state){
+  window.dispatchEvent(new CustomEvent('relphi:sky-display-changed',{detail:{state}}));
+  window.dispatchEvent(new CustomEvent('relphi:relationship-display-changed',{detail:{state}}));
+}
 function setState(next,{announce=true}={}){
   const state=writeState(next&&Object.values(next).every(v=>v===false)?readState():next);
   applyState(document,true,state);
-  if(announce){
-    window.dispatchEvent(new CustomEvent('relphi:sky-display-changed',{detail:{state}}));
-    window.dispatchEvent(new CustomEvent('relphi:relationship-display-changed',{detail:{state}}));
-  }
+  if(announce)announceState(state);
   return state;
 }
 function stateFromLegacyMode(mode){
@@ -178,7 +178,7 @@ function ensureControl(){
   const stray=document.querySelector('#skyFoundationRelationships [data-relationship-display-control],#skyFoundationFocus .sky-chart-filter-bar [data-relationship-display-control]');
   if(stray&&stray.parentElement!==slot)stray.remove();
   let owner=slot.querySelector(':scope>[data-relationship-display-control]');
-  if(owner&&!owner.querySelector('[data-shared-display-layer]')){owner.remove();owner=null}
+  if(owner&&!owner.querySelector('[data-shared-display-layer]')&&!(portalOwner===owner&&popover()?.querySelector('[data-shared-display-layer]'))){owner.remove();owner=null}
   if(!owner){owner=createControl();slot.appendChild(owner)}
   syncControl();
   return true;
@@ -193,7 +193,7 @@ function start(){
   ['relphi:sky-foundation-ready','relphi:sky-foundation-interactions-ready'].forEach(name=>window.addEventListener(name,()=>{ensureObserver();schedule()}));
   ['relphi:sky-foundation-filter-changed','relphi:selected-relationship-rendered','relphi:sky-progressive-symbols-ready'].forEach(name=>window.addEventListener(name,()=>{const root=document.getElementById('skyFoundationRelationships');if(root)applyState(root,false)}));
   document.addEventListener('pointerdown',closeOutside,true);document.addEventListener('keydown',handleMenuKey,true);window.addEventListener('resize',positionPortal);window.addEventListener('scroll',positionPortal,true);
-  window.addEventListener('storage',event=>{if(event.key===SHARED_STORAGE_KEY){const state=readState();syncControl(state);applyState(document,true,state)}});
+  window.addEventListener('storage',event=>{if(event.key===SHARED_STORAGE_KEY||event.key===null){const state=readState();applyState(document,true,state);announceState(state)}});
 }
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 window.RelphiSkyRelationshipDisplay=Object.freeze({
