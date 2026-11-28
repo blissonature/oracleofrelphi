@@ -106,13 +106,12 @@
     const mount=document.getElementById('skyFoundationWheelMount');if(!mount)return;
     let core=document.getElementById('skyFoundationLearnCore');
     const active=window.RelphiSkyStartupMode?.readMode?.()==='learn';
-    if(!active){if(core)core.hidden=true;return}
+    if(!active)return;
     if(!core){
       core=document.createElement('section');core.id='skyFoundationLearnCore';core.className='sky-foundation-panel';core.setAttribute('aria-label','Sky Card Core');
       core.innerHTML='<header><h2>Sky Card Core</h2></header><div class="sky-card-hits-structure-tabs sky-core-tabs" role="tablist" aria-label="Core views"><button type="button" class="sky-card-hits-structure-tab" data-core-tab="houses" role="tab" aria-selected="true">Houses</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="signs" role="tab" aria-selected="false">Signs</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="rulers" role="tab" aria-selected="false">Rulers</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="vocab" role="tab" aria-selected="false">Vocab</button></div><div data-core-structure class="sky-card-hits-structure"></div><div data-core-prompt>Select a sign or house on the wheel to explore its twelve house manifestations.</div><div data-core-content hidden><div class="sky-learn-core-identity"><div><h3 data-core-title></h3><p data-core-qualities></p><p data-core-description></p></div><a data-core-card><img alt=""><span></span></a></div></div>';
       mount.after(core);
     }
-    core.hidden=false;
     const tab=core.dataset.coreActiveTab||'houses',asc=learnAsc(),ruler=state?.kind==='ruler'?state.value:'';
     const structure=core.querySelector('[data-core-structure]'),structureKey=[tab,asc,ruler].join('|');
     const detail=core.querySelector('[data-core-content]'),prompt=core.querySelector('[data-core-prompt]');

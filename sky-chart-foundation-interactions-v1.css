@@ -545,7 +545,7 @@ html[data-sky-last-mode="learn"] #skyFoundationFocus{grid-area:focus}
 html[data-sky-last-mode="learn"] #skyFoundationWheelMount{grid-area:wheel;min-height:0}
 html[data-sky-last-mode="learn"] #skyFoundationRelationships{grid-area:relations;min-width:0;container-type:inline-size;container-name:relphi-relationships}
 #skyFoundationLearnCore{grid-area:core;padding:14px;color:#332e2a}
-#skyFoundationLearnCore[hidden],#skyFoundationLearnCore [hidden]{display:none}
+html:not([data-sky-last-mode="learn"]) #skyFoundationLearnCore,#skyFoundationLearnCore [hidden]{display:none}
 #skyFoundationLearnCore .sky-core-tabs{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:8px}
 #skyFoundationLearnCore [data-core-structure]{padding:0;gap:8px;margin-bottom:12px}
 #skyFoundationLearnCore .sky-core-house-tiles{gap:5px;padding:0}

@@ -127,7 +127,7 @@ try{
      const center=r=>({x:r.x+r.width/2,y:r.y+r.height/2});
      return rows.map(row=>{
        const r=box(row),house=box(row.querySelector('.relphi-house-medallion')),nameEl=row.querySelector('.sky-foundation-row-name'),name=box(nameEl),descEl=row.querySelector('.sky-core-house-description'),desc=box(descEl),host=row.querySelector('.sky-card-house-toggle-glyph'),g=box(host),svg=box(host.querySelector('svg'));
-       return {ordered:house.right<=desc.left&&desc.right<=g.left&&g.right<=name.left,centered:[house,desc,g,svg,name].every(b=>Math.abs(center(b).y-center(r).y)<1),svgCentered:Math.abs(center(g).x-center(svg).x)<1,width:g.width,svgWidth:svg.width,house:row.dataset.house,description:descEl.textContent,canonical:window.RelphiHouseMedallion.descriptions[row.dataset.house],sign:nameEl.textContent.toLowerCase(),expectedSign:window.RelphiSkyWheelSpec.SIGNS[Number(row.dataset.sign)],fits:row.scrollWidth<=row.clientWidth+1&&nameEl.scrollWidth<=nameEl.clientWidth+1&&descEl.scrollWidth<=descEl.clientWidth+1,colorMatch:(()=>{const c=window.RelphiSkyWheelSpec.COLORS[Number(row.dataset.sign)];const probe=document.createElement('span');probe.style.color=c;row.appendChild(probe);const color=getComputedStyle(probe).color;probe.remove();return getComputedStyle(nameEl).color===color&&host.dataset.relphiHouseGlyphColor===c&&Array.from(svg.querySelectorAll('.relphi-canonical-glyph *')).some(el=>el.getAttribute('fill')===c||el.getAttribute('stroke')===c)})()};
+       return {ordered:house.right<=desc.left&&desc.right<=g.left&&g.right<=name.left,centered:[house,desc,g,svg,name].every(b=>Math.abs(center(b).y-center(r).y)<1),svgCentered:Math.abs(center(g).x-center(svg).x)<1,width:g.width,svgWidth:svg.width,house:row.dataset.house,description:descEl.textContent,canonical:window.RelphiHouseMedallion.descriptions[row.dataset.house],sign:nameEl.textContent.toLowerCase(),expectedSign:window.RelphiSkyWheelSpec.SIGNS[Number(row.dataset.sign)],fits:row.scrollWidth<=row.clientWidth+1&&nameEl.scrollWidth<=nameEl.clientWidth+1&&descEl.scrollWidth<=descEl.clientWidth+1,colorMatch:(()=>{const c=window.RelphiSkyWheelSpec.COLORS[Number(row.dataset.sign)];const probe=document.createElement('span');probe.style.color=c;row.appendChild(probe);const color=getComputedStyle(probe).color;probe.remove();return getComputedStyle(nameEl).color===color&&host.dataset.relphiHouseGlyphColor===c&&Array.from(host.querySelectorAll('.relphi-canonical-glyph, .relphi-canonical-glyph *')).some(el=>el.getAttribute('fill')===c||el.getAttribute('stroke')===c)})()};
      });
    });
    console.log('CORE HOUSE GLYPH LAYOUT',viewport.width,JSON.stringify(houseLayout));
@@ -328,6 +328,21 @@ try{
    }
    await page.screenshot({path:'sky-remote-learn-'+viewport.width+'.png',fullPage:true});
    console.log('LEARN TOOLBAR',viewport.width,JSON.stringify(header));
+   // The click must hide Core in the same task, before async wheel/relationship rebuilding.
+   const immediate=await focus.locator('[data-sky-experience="single"]').evaluate(button=>{
+     button.click();
+     const core=document.getElementById('skyFoundationLearnCore');
+     return {mode:document.documentElement.dataset.skyLastMode,display:getComputedStyle(core).display,hasBox:!!core.getClientRects().length};
+   });
+   assert.deepEqual(immediate,{mode:'single',display:'none',hasBox:false});
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel:not([data-sky-experience="learn"])');
+   assert.equal(await core.isVisible(),false);
+   await focus.locator('[data-sky-experience="learn"]').click();
+   await page.waitForSelector('#skyFoundationWheelMount .sky-foundation-wheel[data-sky-experience="learn"]');
+   await core.waitFor({state:'visible'});
+   assert.equal(await core.locator('.sky-core-house-tile').count(),12);
+   console.log('CORE MODE VISIBILITY PASS',viewport.width,JSON.stringify(immediate));
+
   }catch(e){failed=true;console.error('LEARN '+viewport.width+' FAILED '+e.message)}
   finally{await ctx.close()}
  }
