@@ -135,8 +135,8 @@
     if(core.dataset.coreSign===String(index)&&core.dataset.coreHouse===String(ctx.house))return;
     core.dataset.coreSign=String(index);core.dataset.coreHouse=String(ctx.house);
     const title=core.querySelector('[data-core-title]'),shared=window.RelphiSkyCardHitsStructure;
-    title.innerHTML=(shared?.glyphMarkup(index)||'')+' '+ctx.name+' in House '+(shared?.houseMedallionMarkup(ctx.house)||ctx.house);
-    shared?.hydrateCanonicalGlyphs(title);shared?.hydrateHouseMedallions(title);
+    title.innerHTML=(shared?.glyphHost(SIGN_NAMES[index].toLowerCase()).outerHTML||'')+' '+ctx.name+' in House '+(shared?.houseMedallionMarkup(ctx.house)||ctx.house);
+    shared?.hydrateHouseGlyphs(title);shared?.hydrateHouseMedallions(title);
     core.querySelector('[data-core-qualities]').textContent=ctx.ruler+' · '+ctx.structure+' · '+ctx.polarity;
     core.querySelector('[data-core-description]').textContent=ctx.description;
     const link=core.querySelector('[data-core-card]');link.hidden=!ctx.card;

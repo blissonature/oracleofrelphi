@@ -116,6 +116,30 @@ try{
    await page.locator('#skyFoundationWheelMount .sky-foundation-wheel[data-learn-ascendant]').waitFor({state:'visible'});
    await checkWheel();
    const core=page.locator('#skyFoundationLearnCore');
+   await core.getByRole('tab',{name:'Houses',exact:true}).click();
+   const houseRows=core.locator('.sky-core-house-tile');
+   assert.equal(await houseRows.count(),12);
+   await page.waitForFunction(()=>[...document.querySelectorAll('#skyFoundationLearnCore .sky-core-house-tile [data-relphi-house-glyph]')].length===12&&[...document.querySelectorAll('#skyFoundationLearnCore .sky-core-house-tile [data-relphi-house-glyph]')].every(el=>el.dataset.relphiHouseGlyphHydrated==='true'&&el.querySelector('svg .relphi-canonical-glyph')));
+   const layout=await houseRows.evaluateAll(rows=>{
+     const box=el=>el.getBoundingClientRect();
+     const center=r=>({x:r.x+r.width/2,y:r.y+r.height/2});
+     return rows.map(row=>{
+       const r=box(row),house=box(row.querySelector('.relphi-house-medallion')),name=box(row.querySelector('.sky-foundation-row-name')),host=row.querySelector('.sky-card-house-toggle-glyph'),g=box(host),svg=box(host.querySelector('svg'));
+       return {houseLeft:house.right<=name.left,glyphRight:g.left>=name.right,centered:[house,g,svg].every(b=>Math.abs(center(b).y-center(r).y)<1),svgCentered:Math.abs(center(g).x-center(svg).x)<1,width:g.width,svgWidth:svg.width,house:row.dataset.house};
+     });
+   });
+   console.log('CORE HOUSE GLYPH LAYOUT',viewport.width,JSON.stringify(layout));
+   assert.ok(layout.every((r,i)=>r.houseLeft&&r.glyphRight&&r.centered&&r.svgCentered&&r.house===String(i+1)&&Math.abs(r.width-(viewport.width<=520?20:21))<1&&Math.abs(r.width-r.svgWidth)<1),'House medallion left and shared full-card glyph right, centered in every row');
+   await houseRows.first().click();
+   await core.locator('[data-core-content]:not([hidden]) [data-core-title] [data-relphi-house-glyph] svg').waitFor({state:'visible'});
+   const titleGlyph=await core.locator('[data-core-title] .sky-card-house-detail-glyph').evaluate(el=>({width:el.getBoundingClientRect().width,svg:el.querySelector('svg').getBoundingClientRect().width}));
+   assert.ok(Math.abs(titleGlyph.width-(viewport.width<=520?31:32))<1&&Math.abs(titleGlyph.width-titleGlyph.svg)<1,'Expanded Core uses the full-card detail glyph size');
+   await houseRows.first().click();
+   await core.getByRole('tab',{name:'Signs',exact:true}).click();
+   assert.ok(await core.locator('.sky-core-house-tile').evaluateAll(rows=>rows.every(row=>row.querySelector('.sky-card-house-toggle-glyph').getBoundingClientRect().right<=row.querySelector('.sky-foundation-row-name').getBoundingClientRect().left)),'Signs retains its glyph-first order');
+   await core.getByRole('tab',{name:'Houses',exact:true}).click();
+   await page.screenshot({path:'sky-remote-core-houses-'+viewport.width+'.png'});
+
    const coreErrors=[];
    page.on('pageerror',e=>{coreErrors.push(e.message);console.log('CORE PAGE ERROR',e.message)});
    // The actual global menu drives the same three Vocab layers in Learn.

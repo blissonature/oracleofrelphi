@@ -76,6 +76,32 @@ function hydrateCanonicalGlyphs(scope){
     }).catch(error=>{host.dataset.relphiCardSignHydrated='error';console.error('[Sky Chart] Canonical uncircled Card Hits glyph failed',entry.id,error)});
   });
 }
+const RELATIONSHIP_GLYPH_DISPLAY_SIZE=38;
+const RELATIONSHIP_GLYPH_RADIUS=19;
+function glyphHost(id,className='sky-card-house-detail-glyph'){
+  const host=document.createElement('span');host.className=className;host.dataset.relphiHouseGlyph=String(id||'').toLowerCase();host.setAttribute('aria-hidden','true');return host;
+}
+function relationshipMatchedRadius(host){
+  const rectWidth=host?.getBoundingClientRect?.().width||0;
+  const cssWidth=parseFloat(getComputedStyle(host).width)||0;
+  const displaySize=rectWidth||cssWidth||RELATIONSHIP_GLYPH_DISPLAY_SIZE;
+  return RELATIONSHIP_GLYPH_RADIUS*(RELATIONSHIP_GLYPH_DISPLAY_SIZE/displaySize);
+}
+function hydrateHouseGlyphs(scope){
+  const registry=window.RelphiGlyphRegistry,component=window.RelphiGlyphComponent;if(!registry||!component?.createBubble||!scope?.querySelectorAll)return;
+  scope.querySelectorAll('[data-relphi-house-glyph]').forEach(host=>{
+    if(host.dataset.relphiHouseGlyphHydrated==='true')return;
+    const id=host.dataset.relphiHouseGlyph,entry=registry.get?.(id)||registry.resolve?.(id);if(!entry)return;
+    host.dataset.relphiHouseGlyphHydrated='true';host.replaceChildren();
+    const svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','-32 -32 64 64');svg.setAttribute('aria-hidden','true');svg.setAttribute('focusable','false');host.appendChild(svg);
+    try{
+      const bubble=component.createBubble(svg,entry.id,{radius:relationshipMatchedRadius(host),padding:1,color:'#111111',fill:'#ffffff'});
+      if(bubble.circle){bubble.circle.style.opacity='0';bubble.circle.setAttribute('aria-hidden','true')}
+      Promise.resolve(bubble.ready).catch(error=>{host.dataset.relphiHouseGlyphHydrated='error';console.error('[Sky Chart] Canonical House Card Hits glyph failed',entry.id,error)});
+    }catch(error){host.dataset.relphiHouseGlyphHydrated='error';console.error('[Sky Chart] Canonical House Card Hits glyph failed',entry.id,error)}
+  });
+}
+
 function houseMedallionMarkup(house){const n=Math.trunc(Number(house));return n>=1&&n<=12?`<span class="relphi-house-medallion" data-house="${n}" data-card-house-source-medallion="${n}">${n}</span>`:''}
 function hydrateHouseMedallions(scope){
   const api=window.RelphiHouseMedallion;if(!api?.create||!scope?.querySelectorAll)return;
@@ -107,7 +133,7 @@ function rulerDetail(slot,ruler,p,listRecords,c,template,art){
   return`<section class="sky-card-ruler-detail" data-card-ruler-detail="${esc(ruler)}" style="--ruler-focus-color:${focusColor}">${art}<div class="sky-card-ruler-detail-body"><div class="sky-card-ruler-detail-head"><div class="sky-card-ruler-detail-title"><span class="sky-card-ruler-detail-kicker">Ruler focus</span><h4>${esc(cardName(card))} · ${esc(ruler)}</h4></div>${template?'':placed}</div><div class="sky-card-ruler-sections"><section class="sky-card-ruler-section"><h5>Signs</h5>${list(signItems,'None','sky-card-ruler-list-signs')}</section><section class="sky-card-ruler-section"><h5>Houses</h5>${list(houseItems,'None','sky-card-ruler-list-houses')}</section>${template?'':`<section class="sky-card-ruler-section"><h5>Placements</h5>${list(placementItems,'None','sky-card-ruler-list-placements')}</section>`}</div><button type="button" class="sky-card-ruler-clear" data-card-ruler-clear>Clear ruler focus</button></div></section>`}
 function rulersView(slot,p,template=null){const base=records(p),c=template?template.cusps:cusps(p,base),listRecords=housed(base,c),unknown=profile(p).timeUnknown===true,chart=template?SIGN_RULERS[template.asc]:unknown?'':chartRuler(listRecords),selected=template?template.ruler:unknown?'':state[slot].ruler,others=RULERS.filter(r=>r!==chart),tile=r=>{const art=rulerCard(r,listRecords,chart,r===selected);return r===selected?rulerDetail(slot,r,p,listRecords,c,!!template,art):art},stage=unknown?`<div class="sky-card-chart-ruler-stage sky-card-chart-ruler-unknown"><span class="sky-card-chart-ruler-role">Chart Ruler</span><span class="sky-card-chart-ruler-placeholder" role="img" aria-label="Chart Ruler unknown because time of day is unknown"><span class="sky-card-chart-ruler-question" aria-hidden="true">?</span></span><span class="sky-card-time-unknown-note">Requires an exact time.</span></div>`:chart?`<div class="sky-card-chart-ruler-stage"><span class="sky-card-chart-ruler-role">Chart Ruler</span>${tile(chart)}</div>`:'';return`${stage}<div class="sky-card-rulers-grid">${others.map(tile).join('')}</div>`}
 function houseLabel(h){return `<div class="sky-card-house-label">${houseMedallionMarkup(h.house)}<span>${glyphMarkup(h.signIndex)}${esc(h.sign)} cusp</span></div>`}
-function templateHousesView(asc,bySign=false){return `<div class="sky-foundation-ledger sky-core-house-tiles">${Array.from({length:12},(_,i)=>{const signIndex=bySign?i:(asc+i)%12,h=(signIndex-asc+12)%12+1,name=SIGNS[signIndex];return `<button type="button" class="sky-foundation-row sky-core-house-tile" data-core-select-sign="${signIndex}" data-house="${h}" data-sign="${signIndex}" data-interactive="sign" aria-pressed="false" aria-label="${name}, House ${h}" style="--ruler-sign-color:${fingerprintColor(signIndex)};--ruler-house-color:${fingerprintColor(h-1)}"><span class="sky-card-ruler-rail sky-card-ruler-rail-sign" aria-hidden="true"></span>${glyphMarkup(signIndex)}<span class="sky-foundation-row-name">${esc(name)}</span>${houseMedallionMarkup(h)}<span class="sky-card-ruler-rail sky-card-ruler-rail-house" aria-hidden="true"></span></button>`}).join('')}</div>`}
+function templateHousesView(asc,bySign=false){return `<div class="sky-foundation-ledger sky-core-house-tiles">${Array.from({length:12},(_,i)=>{const signIndex=bySign?i:(asc+i)%12,h=(signIndex-asc+12)%12+1,name=SIGNS[signIndex];return `<button type="button" class="sky-foundation-row sky-core-house-tile" data-core-select-sign="${signIndex}" data-house="${h}" data-sign="${signIndex}" data-interactive="sign" aria-pressed="false" aria-label="${name}, House ${h}" style="--ruler-sign-color:${fingerprintColor(signIndex)};--ruler-house-color:${fingerprintColor(h-1)}"><span class="sky-card-ruler-rail sky-card-ruler-rail-sign" aria-hidden="true"></span>${bySign?glyphHost(signIdentity(signIndex),"sky-card-house-toggle-glyph").outerHTML:houseMedallionMarkup(h)}<span class="sky-foundation-row-name">${esc(name)}</span>${bySign?houseMedallionMarkup(h):glyphHost(signIdentity(signIndex),"sky-card-house-toggle-glyph").outerHTML}<span class="sky-card-ruler-rail sky-card-ruler-rail-house" aria-hidden="true"></span></button>`}).join('')}</div>`}
 function housesView(p){if(profile(p).timeUnknown===true)return'<div class="sky-card-time-unknown-panel"><strong>Houses unavailable</strong><span>House cusps require an exact time of day.</span></div>';const houses=houseDecans(p);if(!houses.length)return'<p class="sky-card-hits-empty">House cusps are needed to map decan cards by house.</p>';return`<div class="sky-card-houses">${houses.map(h=>`<section class="sky-card-house-row" data-house-number="${h.house}">${houseLabel(h)}<div class="sky-card-house-decans">${h.cards.map(x=>{const name=cardName(x.card);return`<div class="sky-card-house-decan" title="${esc(name)} · ${esc(SIGNS[x.signIndex])} ${x.decan*10}°–${x.decan*10+10}° · ${x.count} placement${x.count===1?'':'s'}"><span class="sky-card-house-decan-art">${x.card?`<img class="sky-card-house-art-native" src="${esc(fingerprintCardSrc(x.card))}" alt="" loading="lazy" decoding="async" data-card-media="local-house-art">`:''}</span><span class="sky-card-house-decan-label">${glyphMarkup(x.signIndex,'sky-card-inline-glyph')}<span>${x.decan*10}–${x.decan*10+10}°</span><span class="sky-card-house-decan-count${x.count===0?' is-zero':''}">${x.count}</span></span></div>`}).join('')}</div></section>`).join('')}</div>`}
 function render(slot){const target=mount(slot),p=read(slot);if(!target||!p)return;const tab=state[slot].tab,skySignature=JSON.stringify([p.instant||p.dateTime||'',profile(p).timeUnknown===true,source(p).length]);target.innerHTML=`<section class="sky-card-hits-structure" data-card-hits-structure-slot="${slot}" data-card-hits-sky-signature="${esc(skySignature)}" style="--slot-color:${slot==='A'?'#c9211e':'#2462d0'}"><div class="sky-card-hits-structure-tabs" role="tablist" aria-label="Card Hits views"><button type="button" class="sky-card-hits-structure-tab" data-card-hits-view="rulers" role="tab" aria-selected="${tab==='rulers'}">Rulers</button><button type="button" class="sky-card-hits-structure-tab" data-card-hits-view="houses" role="tab" aria-selected="${tab==='houses'}">Houses</button></div>${tab==='rulers'?rulersView(slot,p):housesView(p)}</section>`; hydrateCanonicalGlyphs(target);hydrateHouseMedallions(target)}
 function refreshOpen(){['A','B'].forEach(slot=>{
@@ -233,8 +259,8 @@ function renderTemplate(target,asc,ruler,tab){
   target.innerHTML=tab==='rulers'?rulersView(null,null,{asc,cusps,ruler}):templateHousesView(asc,tab==='signs');
   target.querySelectorAll('[data-card-ruler]').forEach(button=>{button.dataset.coreRuler=button.dataset.cardRuler});
   const clear=target.querySelector('[data-card-ruler-clear]');if(clear){delete clear.dataset.cardRulerClear;clear.dataset.coreClearRuler='true'}
-  hydrateCanonicalGlyphs(target);hydrateHouseMedallions(target);
+  hydrateCanonicalGlyphs(target);hydrateHouseMedallions(target);hydrateHouseGlyphs(target);
 }
-window.RelphiSkyCardHitsStructure=Object.freeze({render:schedule,chartRulerInfo,fingerprint,houseDecans,clearRulerFocus:clearFocus,renderTemplate,glyphMarkup,houseMedallionMarkup,hydrateCanonicalGlyphs,hydrateHouseMedallions,templateRulerSigns:ruler=>(RULER_SIGNS[ruler]||[]).map(name=>SIGNS.indexOf(name))});
+window.RelphiSkyCardHitsStructure=Object.freeze({render:schedule,chartRulerInfo,fingerprint,houseDecans,clearRulerFocus:clearFocus,renderTemplate,glyphMarkup,glyphHost,hydrateHouseGlyphs,houseMedallionMarkup,hydrateCanonicalGlyphs,hydrateHouseMedallions,templateRulerSigns:ruler=>(RULER_SIGNS[ruler]||[]).map(name=>SIGNS.indexOf(name))});
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',start,{once:true}):start();
 })();
