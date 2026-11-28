@@ -109,7 +109,7 @@
     if(!active)return;
     if(!core){
       core=document.createElement('section');core.id='skyFoundationLearnCore';core.className='sky-foundation-panel';core.setAttribute('aria-label','Sky Card Core');
-      core.innerHTML='<header><h2>Sky Card Core</h2></header><div class="sky-card-hits-structure-tabs sky-core-tabs" role="tablist" aria-label="Core views"><button type="button" class="sky-card-hits-structure-tab" data-core-tab="houses" role="tab" aria-selected="true">Houses</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="signs" role="tab" aria-selected="false">Signs</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="rulers" role="tab" aria-selected="false">Rulers</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="vocab" role="tab" aria-selected="false">Vocab</button></div><div data-core-structure class="sky-card-hits-structure"></div><div data-core-prompt>Select a sign or house on the wheel to explore its twelve house manifestations.</div><div data-core-content hidden><div class="sky-learn-core-identity"><div><h3 data-core-title></h3><p data-core-qualities></p><p data-core-description></p></div><a data-core-card><img alt=""><span></span></a></div></div>';
+      core.innerHTML='<header class="sky-core-heading"><h2>Sky Card Core</h2><button type="button" class="sky-card-hits-structure-tab sky-core-sound" data-core-sound aria-label="Sky Card Core sound" aria-pressed="false" title="Enable geometry-derived tones">Sound off</button></header><div class="sky-card-hits-structure-tabs sky-core-tabs" role="tablist" aria-label="Core views"><button type="button" class="sky-card-hits-structure-tab" data-core-tab="houses" role="tab" aria-selected="true">Houses</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="signs" role="tab" aria-selected="false">Signs</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="rulers" role="tab" aria-selected="false">Rulers</button><button type="button" class="sky-card-hits-structure-tab" data-core-tab="vocab" role="tab" aria-selected="false">Vocab</button></div><div data-core-structure class="sky-card-hits-structure"></div><div data-core-prompt>Select a sign or house on the wheel to explore its twelve house manifestations.</div><div data-core-content hidden><div class="sky-learn-core-identity"><div><h3 data-core-title></h3><p data-core-qualities></p><p data-core-description></p></div><a data-core-card><img alt=""><span></span></a></div></div>';
       mount.after(core);
     }
     const tab=core.dataset.coreActiveTab||'houses',asc=learnAsc(),ruler=state?.kind==='ruler'?state.value:'';
@@ -863,6 +863,14 @@
     event.preventDefault();
   }
   function cancelTouch(event){if(touchGesture?.id===event.pointerId)touchGesture=null}
+  // Sound consumes the same relationship eligibility/endpoint computation as the wheel.
+  function coreToneTarget(event){return event.target.closest?.('#skyFoundationLearnCore [data-core-select-sign]')}
+  function playCoreTone(tile){
+    if(!tile||window.RelphiSkyStartupMode?.readMode?.()!=='learn')return;
+    const sign=Number(tile.dataset.coreSelectSign);
+    if(!Number.isInteger(sign)||sign<0||sign>11)return;
+    window.RelphiSkyCoreTones?.play(sign,keepSets({kind:'sign',sky:null,value:sign}).signs);
+  }
   function bind(){
     const root=document.getElementById('skyFoundationRoot');if(!root||root.dataset.foundationInteractionsV2Bound==='true')return;root.dataset.foundationInteractionsV2Bound='true';
     // Capture wheel gestures at document level: foreground placements,
@@ -904,6 +912,7 @@
     root.addEventListener('pointerover',event=>{
       if(event.pointerType==='touch'||event.pointerType==='pen'||(event.pointerType==='mouse'&&performance.now()<ignoreNativeClickUntil))return;
       wheelOnlyExternal=false;
+      const toneTile=coreToneTarget(event);if(toneTile&&!toneTile.contains(event.relatedTarget))playCoreTone(toneTile);
       const ruler=event.target.closest?.('#skyFoundationLearnCore button[data-core-ruler]');
       if(ruler){if(ruler.contains(event.relatedTarget))return;const next={kind:'ruler',sky:null,value:ruler.dataset.coreRuler};if(!same(hoverState,next)){hoverState=next;applyState()}return}
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
@@ -915,6 +924,7 @@
     root.addEventListener('pointermove',event=>{if(event.pointerType==='touch'||event.pointerType==='pen')return;if(lockedState||!event.target.closest?.('#skyFoundationWheelMount'))return;const direct=event.target.closest?.('[data-interactive]:not([data-interactive="aspect"])');if(direct)return;rowHoverState=null;const next=specFrom(nearestAspect(event));if(same(hoverState,next)||(!hoverState&&!next))return;hoverState=next;applyState()});
     root.addEventListener('pointerout',event=>{
       if(event.pointerType==='touch'||event.pointerType==='pen')return;
+      const toneTile=coreToneTarget(event);if(toneTile&&!toneTile.contains(event.relatedTarget))window.RelphiSkyCoreTones?.stop();
       const ruler=event.target.closest?.('#skyFoundationLearnCore button[data-core-ruler]');
       if(ruler){if(!ruler.contains(event.relatedTarget)&&hoverState?.kind==='ruler'&&hoverState.value===ruler.dataset.coreRuler){hoverState=null;applyState()}return}
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
@@ -923,11 +933,13 @@
       const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
     });
     root.addEventListener('focusin',event=>{
+      const toneTile=coreToneTarget(event);if(toneTile?.matches(':focus-visible'))playCoreTone(toneTile);
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node)return;rowHoverState=null;hoverState=specFrom(node);applyState()
     });
     root.addEventListener('focusout',event=>{
+      const toneTile=coreToneTarget(event);if(toneTile&&!toneTile.contains(event.relatedTarget))window.RelphiSkyCoreTones?.stop();
       const row=event.target.closest?.('.sky-foundation-relationship-row[data-relation-index]');
       if(row)return;
       if(lockedState)return;const node=interactive(event);if(!node||node.contains(event.relatedTarget))return;hoverState=null;applyState()
@@ -956,9 +968,11 @@
       wheelOnlyExternal=false;
       const core=event.target.closest?.('#skyFoundationLearnCore');
       if(core){
+        const sound=event.target.closest('[data-core-sound]');
+        if(sound){window.RelphiSkyCoreTones.toggle().then(enabled=>{sound.setAttribute('aria-pressed',String(enabled));sound.textContent=enabled?'Sound on':'Sound off';sound.title=enabled?'Mute geometry-derived tones':'Enable geometry-derived tones'});return}
         const tab=event.target.closest('button[data-core-tab]'),ruler=event.target.closest('[data-core-ruler]'),sign=event.target.closest('[data-core-select-sign]'),clear=event.target.closest('[data-core-clear-ruler]');
-        if(tab){core.dataset.coreActiveTab=tab.dataset.coreTab;updateLearnCore(lockedState);return}
-        if(sign){toggleInteractiveNode(sign);return}
+        if(tab){window.RelphiSkyCoreTones?.stop();core.dataset.coreActiveTab=tab.dataset.coreTab;updateLearnCore(lockedState);return}
+        if(sign){if(event.pointerType==='touch'||event.pointerType==='pen'||event.detail===0)playCoreTone(sign);toggleInteractiveNode(sign);return}
         if(ruler||clear){const next=clear?null:ruler?{kind:'ruler',sky:null,value:ruler.dataset.coreRuler}:{kind:'sign',sky:null,value:Number(sign.dataset.coreSelectSign)};
           lockedState=same(lockedState,next)?null:next;hoverState=null;rowLockedState=null;rowHoverState=null;selectionOrigin=lockedState?{source:'Sky Card Core',...lockedState}:null;
           clearWheelTargets();window.RelphiInlineRelationship?.collapse?.();applyState();}
@@ -993,6 +1007,7 @@
   function schedule(){if(refreshQueued)return;refreshQueued=true;requestAnimationFrame(refresh)}
   function start(){
     window.addEventListener('relphi:sky-foundation-ready',schedule);
+    window.addEventListener('relphi:sky-experience-changed',()=>window.RelphiSkyCoreTones?.stop());
     window.addEventListener('relphi:sky-b-removed',schedule);
     window.addEventListener('relphi:sky-orb-limit-changed',schedule);
     window.addEventListener('relphi:sky-by-sign-changed',schedule);

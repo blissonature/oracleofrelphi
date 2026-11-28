@@ -562,7 +562,10 @@ html:not([data-sky-last-mode="learn"]) #skyFoundationLearnCore,#skyFoundationLea
 #skyFoundationLearnCore .sky-core-house-tile:hover,#skyFoundationLearnCore .sky-core-house-tile:focus-visible,#skyFoundationLearnCore .sky-core-house-tile.is-selected{background:#f4f0e9;border-color:#655d56}
 #skyFoundationLearnCore .sky-core-house-tile:focus-visible{outline:2px solid #655d56;outline-offset:1px}
 #skyFoundationLearnCore [data-core-title]{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-#skyFoundationLearnCore h2{margin:0 0 12px;font-size:1.1rem}
+#skyFoundationLearnCore .sky-core-heading{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:12px}
+#skyFoundationLearnCore h2{margin:0;font-size:1.1rem}
+#skyFoundationLearnCore .sky-core-sound{flex:none;white-space:nowrap;cursor:pointer}
+#skyFoundationLearnCore .sky-core-sound[aria-pressed="true"]{background:#332e2a;color:#fff;border-color:#332e2a}
 #skyFoundationLearnCore h3{margin:0 0 6px;font-size:1.05rem}
 .sky-learn-core-identity{display:grid;grid-template-columns:minmax(0,1fr) minmax(65px,24%);gap:12px;align-items:start}
 .sky-learn-core-identity p{line-height:1.55}

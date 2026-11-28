@@ -93,7 +93,17 @@ try{
   const ctx=await browser.newContext({viewport,serviceWorkers:'block',hasTouch:viewport.width<600});
   const page=await ctx.newPage();
   try{
-   await page.addInitScript(()=>localStorage.setItem('relphiSkyChartLastModeV1','learn'));
+   await page.addInitScript(()=>{
+     localStorage.setItem('relphiSkyChartLastModeV1','learn');
+     window.__testedToneFrequencies=[];
+     const create=AudioContext.prototype.createOscillator;
+     AudioContext.prototype.createOscillator=function(){
+       const osc=create.call(this),start=osc.start.bind(osc),set=osc.frequency.setValueAtTime.bind(osc.frequency);let hz;
+       osc.frequency.setValueAtTime=function(value,time){hz=value;return set(value,time)};
+       osc.start=function(...args){window.__testedToneFrequencies.push(hz);return start(...args)};
+       return osc;
+     };
+   });
    await page.goto(urls[0][1],{waitUntil:'domcontentloaded',timeout:25000});
    const focus=page.locator('#skyFoundationFocus');
    await focus.locator('[data-zodiac-summary]').waitFor({state:'visible',timeout:20000});
@@ -132,6 +142,21 @@ try{
    });
    console.log('CORE HOUSE GLYPH LAYOUT',viewport.width,JSON.stringify(houseLayout));
    assert.ok(houseLayout.every((r,i)=>r.ordered&&r.centered&&r.svgCentered&&r.fits&&r.colorMatch&&r.description===r.canonical&&r.sign===r.expectedSign&&r.house===String(i+1)&&Math.abs(r.width-(viewport.width<=520?29:30))<1&&Math.abs(r.width-r.svgWidth)<1),'House medallion, exact concern, canonical glyph and sign name in order, centered and unclipped');
+   const sound=core.locator('[data-core-sound]');
+   const tuning=await page.evaluate(()=>{
+     const tones=window.RelphiSkyCoreTones,all=Array.from({length:12},(_,i)=>i);
+     return all.map(root=>tones.sequence(root,all));
+   });
+   assert.equal(new Set(tuning.map(notes=>notes[0].frequency)).size,12);
+   assert.ok(tuning.every(notes=>notes.length===12&&Math.abs(notes[1].frequency/notes[0].frequency-2**(7/12))<1e-12));
+   await sound.click();await page.waitForFunction(()=>window.RelphiSkyCoreTones.enabled);
+   if(viewport.width<600)await houseRows.first().tap();else await houseRows.first().hover();
+   await page.waitForFunction(()=>window.__testedToneFrequencies.length>=12);
+   const heard=await page.evaluate(()=>window.__testedToneFrequencies.slice(0,12));
+   assert.deepEqual(heard,tuning[0].map(note=>note.frequency),'Audio oscillators must sound geometry-derived frequencies in zodiac order');
+   await sound.click();await page.waitForFunction(()=>!window.RelphiSkyCoreTones.enabled);
+   if(viewport.width<600)await houseRows.first().click(); // restore unlocked state after the tap test
+   console.log('CORE TONES PASS',viewport.width,JSON.stringify(heard));
    await houseRows.first().click();
    await core.locator('[data-core-content]:not([hidden]) [data-core-title] [data-relphi-house-glyph] svg').waitFor({state:'visible'});
    const titleGlyph=await core.locator('[data-core-title] .sky-card-house-detail-glyph').evaluate(el=>({width:el.getBoundingClientRect().width,svg:el.querySelector('svg').getBoundingClientRect().width}));
