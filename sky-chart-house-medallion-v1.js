@@ -14,6 +14,20 @@ window.__relphiSkyHouseMedallionV1=true;
 
 const STYLE_ID='skyHouseMedallionV8Styles';
 const HOUSE_NAMES=['','First House','Second House','Third House','Fourth House','Fifth House','Sixth House','Seventh House','Eighth House','Ninth House','Tenth House','Eleventh House','Twelfth House'];
+const HOUSE_DESCRIPTIONS = Object.freeze({
+  '1':'self, body, approach',
+  '2':'money, possessions, worth',
+  '3':'communication, siblings, local life',
+  '4':'home, family, roots',
+  '5':'pleasure, creativity, children',
+  '6':'work, health, routine',
+  '7':'partners, bonds, agreements',
+  '8':'loss, death, other people’s resources',
+  '9':'travel, belief, higher learning',
+  '10':'career, reputation, public life',
+  '11':'friends, groups, hopes',
+  '12':'solitude, sorrow, hidden things'
+});
 const HOUSE_COLORS=['#e53935','#f06b32','#f39a2e','#f5be3d','#f1dc43','#a9cf46','#43a85b','#2ca69b','#3285c7','#5961c8','#8c4fb4','#bd438e'];
 const ORDINAL_SUFFIX={1:'ˢᵗ',2:'ⁿᵈ',3:'ʳᵈ'};
 
@@ -129,5 +143,5 @@ function decorateCoordinate(small,coordinate,house,field,interactive=false){
 function noOp(){}
 
 installStyles();
-window.RelphiHouseMedallion=Object.freeze({colors:Object.freeze(HOUSE_COLORS.slice()),names:Object.freeze(HOUSE_NAMES.slice()),ordinalHouseLabel,create:medallion,decorateCoordinate,refreshCompact:noOp,refreshPlacements:noOp});
+window.RelphiHouseMedallion=Object.freeze({colors:Object.freeze(HOUSE_COLORS.slice()),names:Object.freeze(HOUSE_NAMES.slice()),descriptions:HOUSE_DESCRIPTIONS,ordinalHouseLabel,create:medallion,decorateCoordinate,refreshCompact:noOp,refreshPlacements:noOp});
 })();

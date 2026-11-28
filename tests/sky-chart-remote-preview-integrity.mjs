@@ -126,12 +126,12 @@ try{
      const box=el=>el.getBoundingClientRect();
      const center=r=>({x:r.x+r.width/2,y:r.y+r.height/2});
      return rows.map(row=>{
-       const r=box(row),house=box(row.querySelector('.relphi-house-medallion')),name=box(row.querySelector('.sky-foundation-row-name')),host=row.querySelector('.sky-card-house-toggle-glyph'),g=box(host),svg=box(host.querySelector('svg'));
-       return {houseLeft:house.right<=name.left,glyphRight:g.left>=name.right,centered:[house,g,svg].every(b=>Math.abs(center(b).y-center(r).y)<1),svgCentered:Math.abs(center(g).x-center(svg).x)<1,width:g.width,svgWidth:svg.width,house:row.dataset.house};
+       const r=box(row),house=box(row.querySelector('.relphi-house-medallion')),nameEl=row.querySelector('.sky-foundation-row-name'),name=box(nameEl),descEl=row.querySelector('.sky-core-house-description'),desc=box(descEl),host=row.querySelector('.sky-card-house-toggle-glyph'),g=box(host),svg=box(host.querySelector('svg'));
+       return {ordered:house.right<=desc.left&&desc.right<=g.left&&g.right<=name.left,centered:[house,desc,g,svg,name].every(b=>Math.abs(center(b).y-center(r).y)<1),svgCentered:Math.abs(center(g).x-center(svg).x)<1,width:g.width,svgWidth:svg.width,house:row.dataset.house,description:descEl.textContent,canonical:window.RelphiHouseMedallion.descriptions[row.dataset.house],sign:nameEl.textContent.toLowerCase(),expectedSign:window.RelphiSkyWheelSpec.SIGNS[Number(row.dataset.sign)],fits:row.scrollWidth<=row.clientWidth+1&&nameEl.scrollWidth<=nameEl.clientWidth+1&&descEl.scrollWidth<=descEl.clientWidth+1};
      });
    });
    console.log('CORE HOUSE GLYPH LAYOUT',viewport.width,JSON.stringify(houseLayout));
-   assert.ok(houseLayout.every((r,i)=>r.houseLeft&&r.glyphRight&&r.centered&&r.svgCentered&&r.house===String(i+1)&&Math.abs(r.width-(viewport.width<=520?29:30))<1&&Math.abs(r.width-r.svgWidth)<1),'House medallion left and shared full-card glyph right, centered in every row');
+   assert.ok(houseLayout.every((r,i)=>r.ordered&&r.centered&&r.svgCentered&&r.fits&&r.description===r.canonical&&r.sign===r.expectedSign&&r.house===String(i+1)&&Math.abs(r.width-(viewport.width<=520?29:30))<1&&Math.abs(r.width-r.svgWidth)<1),'House medallion, exact concern, canonical glyph and sign name in order, centered and unclipped');
    await houseRows.first().click();
    await core.locator('[data-core-content]:not([hidden]) [data-core-title] [data-relphi-house-glyph] svg').waitFor({state:'visible'});
    const titleGlyph=await core.locator('[data-core-title] .sky-card-house-detail-glyph').evaluate(el=>({width:el.getBoundingClientRect().width,svg:el.querySelector('svg').getBoundingClientRect().width}));
@@ -299,6 +299,14 @@ try{
     }));
     console.log('LEARN MENU COLUMNS',viewport.width,popover,JSON.stringify(layout));
     assert.ok(layout.length>0&&layout.every(r=>r.count===1&&r.tracks.length===2&&Math.abs(parseFloat(r.tracks[1])-40)<1&&Math.abs(r.right-r.checkboxCenter-20)<2),'One 40px checkbox column must reach the row right edge');
+    if(toggle.includes('house')){
+      const menuDescriptions=await popup.locator('.sky-chart-house-menu-description').allTextContents();
+      const coreDescriptions=await core.locator('[data-core-view="houses"] .sky-core-house-description').allTextContents();
+      assert.deepEqual(coreDescriptions,menuDescriptions,'House concerns must match the Focus dropdown verbatim after Ascendant changes');
+      const signs=await core.locator('[data-core-view="houses"] .sky-foundation-row-name').allTextContents();
+      assert.equal(signs[0],'Pisces','House 1 follows the selected Ascendant');
+      console.log('CORE HOUSE CONCERNS PASS',viewport.width,JSON.stringify(coreDescriptions));
+    }
     await page.screenshot({path:'sky-remote-'+(toggle.includes('aspect')?'aspect':'house')+'-menu-'+viewport.width+'.png'});
     await page.keyboard.press('Escape');
    }

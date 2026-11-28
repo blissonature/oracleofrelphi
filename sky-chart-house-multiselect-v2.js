@@ -7,20 +7,7 @@
 
   const SLOTS = ['A','B'];
   const HOUSES = Array.from({ length:12 }, (_, index) => String(index + 1));
-  const HOUSE_DESCRIPTIONS = Object.freeze({
-    '1':'self, body, approach',
-    '2':'money, possessions, worth',
-    '3':'communication, siblings, local life',
-    '4':'home, family, roots',
-    '5':'pleasure, creativity, children',
-    '6':'work, health, routine',
-    '7':'partners, bonds, agreements',
-    '8':'loss, death, other people’s resources',
-    '9':'travel, belief, higher learning',
-    '10':'career, reputation, public life',
-    '11':'friends, groups, hopes',
-    '12':'solitude, sorrow, hidden things'
-  });
+  const HOUSE_DESCRIPTIONS = window.RelphiHouseMedallion.descriptions;
   const STORAGE_KEY = 'relphiSkyHouseFilterV1';
   const learn=()=>window.RelphiSkyStartupMode?.readMode?.()==='learn';
   const state = { A:new Set(HOUSES), B:new Set(HOUSES), learn:new Set(HOUSES) };
